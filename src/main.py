@@ -14,8 +14,7 @@ def main():
     tag1_pos = Position(13, 10, 7)
     far_x1_pos = Position(22, 0, 0)
     far_y1_pos = Position(0, 3, 0)
-    origin_to_far_x1 = origin.get_dist_to(far_x1_pos)
-    origin_to_far_y1 = origin.get_dist_to(far_y1_pos)
+
     tag1_to_origin = tag1_pos.get_dist_to(origin)
     tag1_to_far_x1 = tag1_pos.get_dist_to(far_x1_pos)
     tag1_to_far_y1 = tag1_pos.get_dist_to(far_y1_pos)
