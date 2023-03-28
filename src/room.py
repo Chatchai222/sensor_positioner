@@ -153,30 +153,7 @@ class FarAxisOrigin2DPositionCalculator(PositionCalculator):
             return NullPosition()
         
 
-    # def _is_position_calculatable(self, many_tag_dist_to_anchor_pos) -> bool:
-    #     if not self._is_many_tag_dist_to_anchor_pos_correct_format(many_tag_dist_to_anchor_pos):
-    #         return False
-    #     if not self._is_many_tag_dist_to_anchor_pos_has_origin_anchor_pos(many_tag_dist_to_anchor_pos):
-    #         return False
-    #     if not self._is_many_tag_dist_to_anchor_pos_has_far_x_anchor_pos(many_tag_dist_to_anchor_pos):
-    #         return False
-    #     if not self._is_many_tag_dist_to_anchor_pos_has_far_y_anchor_pos(many_tag_dist_to_anchor_pos):
-    #         return False
-        
-    
-    # def _is_many_dist_to_anchor_correct_format(self, many_dist_to_anchor_pos) -> bool:
-    #     pass
-
-
     def _get_position(self, many_tag_dist_and_anchor_pos) -> Position:
-        # tag_dist_to_origin_pos = self._get_tag_dist_to_origin_pos(many_tag_dist_to_anchor_pos)
-        # tag_dist_to_far_x_pos = self._get_tag_dist_to_far_x_pos(many_tag_dist_to_anchor_pos)
-        # tag_dist_to_far_y_pos = self._get_tag_dist_to_far_y_pos(many_tag_dist_to_anchor_pos)
-
-        # origin_pos = self._get_origin_pos(many_tag_dist_to_anchor_pos)
-        # far_x_pos = self._get_far_x_pos(many_tag_dist_to_anchor_pos)
-        # far_y_pos = self._get_far_y_pos(many_tag_dist_to_anchor_pos)
-
         tag_dist_to_origin_pos, origin_pos = self._get_tag_dist_to_origin_and_origin_pos(many_tag_dist_and_anchor_pos)
         tag_dist_to_far_x_pos, far_x_pos = self._get_tag_dist_to_far_x_and_far_x_pos(many_tag_dist_and_anchor_pos)
         tag_dist_to_far_y_pos, far_y_pos = self._get_tag_dist_to_far_y_and_far_y_pos(many_tag_dist_and_anchor_pos)
