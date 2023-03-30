@@ -10,14 +10,6 @@ class Position:
     
     def is_null(self) -> bool:
         return False
-    
-    
-    def is_equal(self, other_pos) -> bool:
-        other_x = other_pos.get_x()
-        other_y = other_pos.get_y()
-        other_z = other_pos.get_z()
-        
-        return other_x == self._x and other_y == self._y and other_z == self._z
         
 
     def is_almost_equal(self, other_pos, error_dist_threshold=0.001) -> bool:
@@ -88,6 +80,10 @@ class Position:
 
     def __repr__(self):
         return self.to_string()
+    
+
+    def __eq__(self, other):
+        return self._x == other.get_x() and self._y == other.get_y() and self._z == other.get_z()
     
 
 class NullPosition(Position):
@@ -175,7 +171,7 @@ class FarAxisOrigin2DPositionCalculator(PositionCalculator):
 
     def _get_tag_dist_to_origin_and_origin_pos(self, many_tag_dist_and_anchor_pos):
         for tag_dist, anchor_pos in many_tag_dist_and_anchor_pos:
-            if anchor_pos.is_equal(Position(0, 0, 0)):
+            if anchor_pos == Position(0, 0, 0):
                 return tag_dist, anchor_pos
             
         raise Exception("Tag distance and anchor pos don't have origin anchor")

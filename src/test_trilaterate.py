@@ -15,6 +15,13 @@ class TestPosition(unittest.TestCase):
         self.assertTrue(pos1.is_almost_equal(pos3))
 
 
+    def test_givenTwoPositionWithSameCoordinate_thenEqualityOperatorReturnTrue(self):
+        pos1 = Position(10, 20, 30)
+        pos2 = Position(10, 20, 30)
+
+        self.assertTrue(pos1 == pos2)
+
+
 class TestFarAxisOrigin2DPositionCalculator(unittest.TestCase):
 
     
