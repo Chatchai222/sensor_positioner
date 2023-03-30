@@ -2,6 +2,19 @@ import unittest
 from trilaterate import *
 import math
 
+class TestPosition(unittest.TestCase):
+    
+
+    def test_givenTwoPositionWithSmallDistance_thenPositionIsAlmostEqual(self):
+        # This test is for floating point error 
+        pos1 = Position(10, 20, 30)
+        pos2 = Position(10.00001, 19.9999, 30.0003)
+        pos3 = Position(9.99999, 20.00001, 29.99999)
+        
+        self.assertTrue(pos1.is_almost_equal(pos2))
+        self.assertTrue(pos1.is_almost_equal(pos3))
+
+
 class TestFarAxisOrigin2DPositionCalculator(unittest.TestCase):
 
     

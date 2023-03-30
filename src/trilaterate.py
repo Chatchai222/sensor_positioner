@@ -20,6 +20,11 @@ class Position:
         return other_x == self._x and other_y == self._y and other_z == self._z
         
 
+    def is_almost_equal(self, other_pos, error_dist_threshold=0.001) -> bool:
+        dist_diff = self.get_dist_to(other_pos)
+        return dist_diff < error_dist_threshold
+            
+
     def get_dist_to(self, other_pos) -> float:
         o_x = other_pos.get_x()
         o_y = other_pos.get_y()
