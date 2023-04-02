@@ -39,7 +39,6 @@ class AnchorSensor:
 
 
 
-
 class TagSensor:
     
 
@@ -123,7 +122,17 @@ class Room:
     
 
     def upsert_tag_to_anchor_dist(self, in_tag_id, in_anchor_id, in_dist):
-        pass
+        anchor = self._get_anchor(in_anchor_id)
+        if anchor is None:
+            return
+        
+        tag = self._get_tag(in_tag_id)
+        if tag is None:
+            new_tag = TagSensor(in_tag_id)
+            new_tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
+            self._many_tag.append(new_tag)            
+        else:
+            tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
 
 
     def _update_anchor(self, in_anchor: AnchorSensor):
@@ -137,4 +146,22 @@ class Room:
         self._many_anchor.append(in_anchor)
 
 
+    def _get_anchor(self, in_anchor_id):
+        output = None
+        for i, anchor in enumerate(self._many_anchor):
+            if anchor.get_id() == in_anchor_id:
+                output = anchor
+                break
+
+        return output
     
+
+    def _get_tag(self, in_tag_id):
+        output = None
+        for i, tag in enumerate(self._many_tag):
+            if tag.get_id() == in_tag_id:
+                output = tag
+                break
+
+        return output
+

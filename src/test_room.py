@@ -194,6 +194,24 @@ class TestRoom(unittest.TestCase):
         self.assertEqual(many_tag, [])
 
         
+    def test_givenRoomWithAnchor_whenUpsertTagToAnchorDist_thenTagIsUpdatedWithDistance(self):
+        tag_id = "2000"
+        anchor_id = "1000"
+        dist = 6.83
+        anchor_pos = Position(10, 20, 30)
+        
+        self.room.upsert_anchor_position(anchor_id, anchor_pos)
+        self.room.upsert_tag_to_anchor_dist(tag_id, anchor_id, dist)
+        many_tag = self.room.get_many_tag()
+        returned_tag = many_tag[0]
+        print(returned_tag)
+        r_dist, anchor = returned_tag.get_many_dist_to_anchor_and_anchor()[0]
+        
+        self.assertEqual(r_dist, dist)
+        self.assertEqual(anchor.get_id(), anchor_id)
+        self.assertEqual(anchor.get_position(), anchor_pos)
+        
+        
 
         
         
