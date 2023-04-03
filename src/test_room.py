@@ -212,6 +212,30 @@ class TestRoom(unittest.TestCase):
         self.assertEqual(anchor.get_position(), anchor_pos)
 
 
+    def test_givenUpdateTagName_whenNoTagExist_thenDoNothing(self):
+        tag_id = "2000"
+        tag_name = "alice"
+        
+        self.room.update_tag_name(tag_id, tag_name)
+        many_tag = self.room.get_many_tag()
+        
+        self.assertEqual(many_tag, [])
+
+
+    def test_givenUpdateTagName_whenTagIdMatch_thenUpdateTagName(self):
+        tag_id = "2000"
+        tag_name = "alice"
+        tag_to_anchor_dist = "8.32"
+        anchor_id = "1000"
+        anchor_pos = Position(10, 20, 30)
+
+        self.room.upsert_anchor_position(anchor_id, anchor_pos)
+        self.room.upsert_tag_to_anchor_dist(tag_id, anchor_id, tag_to_anchor_dist)
+        self.room.update_tag_name(tag_id, tag_name)
+        many_tag = self.room.get_many_tag()
+        tag = many_tag[0]
+
+        self.assertEqual(tag.get_name(), tag_name)
         
         
 class TestAnchorCollection(unittest.TestCase):
@@ -335,3 +359,37 @@ class TestTagCollection(unittest.TestCase):
 
         self.assertEqual(Tag("1000"), returned_tag)
 
+
+class TestTrilaterate(unittest.TestCase):
+    
+
+    def test_givenSensorData_thenReturnedPosition(self):
+        room = Room()
+        origin_id = "1000"
+        origin_pos = Position(0, 0, 0)
+        far_x_id = "1001"
+        far_x_pos = Position(11, 0, 0)
+        far_y_id = "1002"
+        far_y_pos = Position(0, 5, 0)
+        tag_id = "2000"
+        tag_name = "alice"
+        tag_to_origin = math.sqrt(379)
+        tag_to_far_x = math.sqrt(434)
+        tag_to_far_y = math.sqrt(314)
+        # Actual tag pos mathematically would be (3, 9, 17)
+        # but for now algorithm is only for 2D space
+        expected_tag_pos = Position(3, 9, 0)
+
+        room.upsert_anchor_position(origin_id, origin_pos)
+        room.upsert_anchor_position(far_x_id, far_x_pos)
+        room.upsert_anchor_position(far_y_id, far_y_pos)
+        room.upsert_tag_to_anchor_dist(tag_id, origin_id, tag_to_origin)
+        room.upsert_tag_to_anchor_dist(tag_id, far_x_id, tag_to_far_x)
+        room.upsert_tag_to_anchor_dist(tag_id, far_y_id, tag_to_far_y)
+        many_tag = room.get_many_tag()
+        tag = many_tag[0]
+        calculated_tag_pos = tag.get_position()
+
+        self.assertTrue(expected_tag_pos.is_almost_equal(calculated_tag_pos))
+
+    

@@ -239,6 +239,14 @@ class Room:
         tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
 
 
+    def update_tag_name(self, in_tag_id, in_tag_name):
+        try:
+            tag = self._tag_collection.get_tag(in_tag_id)
+            tag.set_name(in_tag_name)
+        except TagCollection.GetNonexistentTagIdException:
+            pass
+
+
 
 
 
