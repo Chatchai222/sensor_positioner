@@ -1,7 +1,7 @@
 from trilaterate import Position, FarAxisOrigin2DPositionCalculator
 
 
-class AnchorSensor:
+class Anchor:
     
 
     def __init__(self, id: str, pos: Position):
@@ -12,6 +12,10 @@ class AnchorSensor:
 
     def __eq__(self, other_pos):
         return self._id == other_pos.get_id()
+    
+
+    def __repr__(self):
+        return f"id: {self._id}, name: {self._name}, pos: {self._pos}"
         
 
     def is_equal(self, other_anchor):
@@ -39,7 +43,7 @@ class AnchorSensor:
 
 
 
-class TagSensor:
+class Tag:
     
 
     _pos_calculator = FarAxisOrigin2DPositionCalculator()
@@ -88,33 +92,82 @@ class TagSensor:
             many_dist_to_anchor_and_anchor_pos.append( [dist, anchor.get_position()])
         
         return self.__class__._pos_calculator.get_position_or_null_position(many_dist_to_anchor_and_anchor_pos)
+
+
+class AnchorCollection:
+
+
+    def __init__(self):
+        self._many_anchor = []
+
     
+    def get_many_anchor(self):
+        return self._many_anchor
+
+
+    def insert_anchor(self, in_anchor_id, in_anchor_pos):
+        anchor = Anchor(in_anchor_id, in_anchor_pos)
+        if anchor in self._many_anchor:
+            raise self.__class__.InsertSameAnchorIdException("Insert anchor with same id")
+        else:
+            self._many_anchor.append(anchor)
+            
+
+    def update_anchor_position(self, in_anchor_id, in_anchor_pos):
+        in_anchor = Anchor(in_anchor_id, in_anchor_pos)
+        for i, anchor in enumerate(self._many_anchor):
+            if anchor.get_id() == in_anchor_id:
+                self._many_anchor[i] = in_anchor
+                return
+
+        raise self.__class__.UpdateNonexistentAnchorIdException("Update anchor with nonexistent id")
+
+
+    def get_anchor(self, in_anchor_id):
+        for anchor in self._many_anchor:
+            if anchor.get_id() == in_anchor_id:
+                return anchor
+            
+        raise self.__class__.GetNonexistentAnchorIdException
+
+
+    class InsertSameAnchorIdException(Exception):
+        pass
+
+    
+    class UpdateNonexistentAnchorIdException(Exception):
+        pass
+
+
+    class GetNonexistentAnchorIdException(Exception):
+        pass
+
 
 class Room:
 
     
     def __init__(self):
-        self._many_anchor = []
+        self._anchor_collection = AnchorCollection()
         self._many_tag = []
 
 
     def get_many_anchor(self):
-        return self._many_anchor
+        return self._anchor_collection.get_many_anchor()
     
     
     def upsert_anchor_position(self, in_anchor_id: str, in_anchor_pos: Position):
-        input_anchor = AnchorSensor(in_anchor_id, in_anchor_pos)
-        if input_anchor in self._many_anchor:
-            self._update_anchor(input_anchor)
-        else:
-            self._insert_anchor(input_anchor)
-
+        try:
+            self._anchor_collection.update_anchor_position(in_anchor_id, in_anchor_pos)
+        except AnchorCollection.UpdateNonexistentAnchorIdException:
+            self._anchor_collection.insert_anchor(in_anchor_id, in_anchor_pos)
+    
 
     def update_anchor_name(self, in_anchor_id: str, in_name: str):
-        for _, anchor in enumerate(self._many_anchor):
-            if in_anchor_id == anchor.get_id():
-                anchor.set_name(in_name)
-                break
+        try:
+            anchor = self._anchor_collection.get_anchor(in_anchor_id)
+            anchor.set_name(in_name)
+        except AnchorCollection.GetNonexistentAnchorIdException:
+            pass
     
 
     def get_many_tag(self):
@@ -122,38 +175,21 @@ class Room:
     
 
     def upsert_tag_to_anchor_dist(self, in_tag_id, in_anchor_id, in_dist):
-        anchor = self._get_anchor(in_anchor_id)
-        if anchor is None:
+        # anchor = self._get_anchor(in_anchor_id)
+        # if anchor is None:
+        #     return
+        try:
+            anchor = self._anchor_collection.get_anchor(in_anchor_id)
+        except AnchorCollection.GetNonexistentAnchorIdException:
             return
         
         tag = self._get_tag(in_tag_id)
         if tag is None:
-            new_tag = TagSensor(in_tag_id)
+            new_tag = Tag(in_tag_id)
             new_tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
             self._many_tag.append(new_tag)            
         else:
             tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
-
-
-    def _update_anchor(self, in_anchor: AnchorSensor):
-        for i, anchor in enumerate(self._many_anchor):
-            if in_anchor == anchor:
-                self._many_anchor[i] = in_anchor
-                break
-    
-
-    def _insert_anchor(self, in_anchor: AnchorSensor):
-        self._many_anchor.append(in_anchor)
-
-
-    def _get_anchor(self, in_anchor_id):
-        output = None
-        for i, anchor in enumerate(self._many_anchor):
-            if anchor.get_id() == in_anchor_id:
-                output = anchor
-                break
-
-        return output
     
 
     def _get_tag(self, in_tag_id):
