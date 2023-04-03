@@ -210,6 +210,8 @@ class TestRoom(unittest.TestCase):
         self.assertEqual(r_dist, dist)
         self.assertEqual(anchor.get_id(), anchor_id)
         self.assertEqual(anchor.get_position(), anchor_pos)
+
+
         
         
 class TestAnchorCollection(unittest.TestCase):
@@ -236,7 +238,7 @@ class TestAnchorCollection(unittest.TestCase):
         self.assertEqual(anchor_id, returned_anchor.get_id())
         self.assertEqual(anchor_pos, returned_anchor.get_position())
 
-
+    
     def test_givenAnchorIdAndPos_whenInsertAndCollectionHasSameExistingAnchorId_thenRaiseException(self):
         anchor_id = "1000"
         anchor_pos = Position(10, 20, 30)
@@ -290,7 +292,7 @@ class TestAnchorCollection(unittest.TestCase):
 
 
 class TestTagCollection(unittest.TestCase):
-    
+
     
     def setUp(self):
         self.tag_collection = TagCollection()

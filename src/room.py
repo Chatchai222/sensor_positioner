@@ -198,7 +198,7 @@ class Room:
     
     def __init__(self):
         self._anchor_collection = AnchorCollection()
-        self._many_tag = []
+        self._tag_collection = TagCollection()
 
 
     def get_many_anchor(self):
@@ -221,7 +221,7 @@ class Room:
     
 
     def get_many_tag(self):
-        return self._many_tag
+        return self._tag_collection.get_many_tag()
     
 
     def upsert_tag_to_anchor_dist(self, in_tag_id, in_anchor_id, in_dist):
@@ -230,21 +230,16 @@ class Room:
         except AnchorCollection.GetNonexistentAnchorIdException:
             return
         
-        tag = self._get_tag(in_tag_id)
-        if tag is None:
-            new_tag = Tag(in_tag_id)
-            new_tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
-            self._many_tag.append(new_tag)            
-        else:
-            tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
-    
+        try:
+            tag = self._tag_collection.get_tag(in_tag_id)
+        except TagCollection.GetNonexistentTagIdException:
+            self._tag_collection.insert_tag_by_id(in_tag_id)
+            tag = self._tag_collection.get_tag(in_tag_id)
 
-    def _get_tag(self, in_tag_id):
-        output = None
-        for i, tag in enumerate(self._many_tag):
-            if tag.get_id() == in_tag_id:
-                output = tag
-                break
+        tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
 
-        return output
+
+
+
+
 
