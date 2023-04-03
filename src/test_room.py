@@ -389,6 +389,7 @@ class TestTrilaterate(unittest.TestCase):
         many_tag = room.get_many_tag()
         tag = many_tag[0]
         calculated_tag_pos = tag.get_position()
+        print(calculated_tag_pos)
 
         self.assertTrue(expected_tag_pos.is_almost_equal(calculated_tag_pos))
 
