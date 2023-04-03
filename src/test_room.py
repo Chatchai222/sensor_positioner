@@ -2,7 +2,7 @@ import unittest
 import math
 
 from trilaterate import Position, PositionCalculator
-from room import Anchor, Tag, Room, AnchorCollection
+from room import Anchor, Tag, Room, AnchorCollection, TagCollection
 
 class TestAnchorSensor(unittest.TestCase):
     
@@ -229,7 +229,7 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = Position(10, 20, 30)
 
-        self.anchor_collection.insert_anchor(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         many_anchor = self.anchor_collection.get_many_anchor()
         returned_anchor = many_anchor[0]
 
@@ -241,17 +241,17 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = Position(10, 20, 30)
 
-        self.anchor_collection.insert_anchor(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
 
-        self.assertRaises(AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor, anchor_id, anchor_pos )
-        self.assertRaises(AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor, anchor_id, Position(6, 6, 6))
+        self.assertRaises(AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, anchor_pos )
+        self.assertRaises(AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, Position(6, 6, 6))
 
 
     def test_givenAnchorIdAndPos_whenUpdateCollectionWithNoSameExistingAnchorId_thenRaiseException(self):
         anchor_id = "1000"
         anchor_pos = Position(10, 20, 30)
         
-        self.anchor_collection.insert_anchor(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         
         self.assertRaises(AnchorCollection.UpdateNonexistentAnchorIdException, self.anchor_collection.update_anchor_position, "666", Position(10, 20, 30))
 
@@ -261,7 +261,7 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_pos = Position(10, 20, 30)
         updated_pos = Position(40, 50, 60)
         
-        self.anchor_collection.insert_anchor(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         self.anchor_collection.update_anchor_position(anchor_id, updated_pos)
         returned_anchor = self.anchor_collection.get_anchor(anchor_id)
 
@@ -273,7 +273,7 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = Position(10, 20, 30)
 
-        self.anchor_collection.insert_anchor(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         
         self.assertRaises(AnchorCollection.GetNonexistentAnchorIdException, self.anchor_collection.get_anchor, "666")
 
@@ -282,8 +282,54 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = Position(10, 20, 30)
         
-        self.anchor_collection.insert_anchor(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         returned_anchor = self.anchor_collection.get_anchor(anchor_id)
         
         self.assertEqual(returned_anchor.get_id(), anchor_id)
         self.assertEqual(returned_anchor.get_position(), anchor_pos)
+
+
+class TestTagCollection(unittest.TestCase):
+    
+    
+    def setUp(self):
+        self.tag_collection = TagCollection()
+
+
+    def test_givenNewTagCollection_whenGetManyTag_thenManyTagIsEmpty(self):
+        many_tag = self.tag_collection.get_many_tag()
+        
+        self.assertEqual([], many_tag)
+
+
+    def test_givenInsertTag_whenEmptyCollection_thenManyTagHasTag(self):
+        tag_id = "1000"
+        
+        self.tag_collection.insert_tag_by_id("1000")
+        many_tag = self.tag_collection.get_many_tag()
+        returned_tag = many_tag[0]
+
+        self.assertEqual(returned_tag.get_id(), tag_id)
+
+    
+    def test_givenInsertTagById_whenCollectionHasTagWithSameId_thenRaiseException(self):
+        self.tag_collection.insert_tag_by_id("1000")
+        self.tag_collection.insert_tag_by_id("1001")
+
+        self.assertRaises(TagCollection.InsertSameTagIdException, self.tag_collection.insert_tag_by_id, "1000")
+
+
+    def test_givenGetTag_whenCollectionHasNoTagWithSameId_thenRaiseException(self):
+        self.tag_collection.insert_tag_by_id("1000")
+
+        self.assertRaises(TagCollection.GetNonexistentTagIdException, self.tag_collection.get_tag, "666")
+
+
+    def test_givenGetTag_whenCollectionHasTag_thenReturnTag(self):
+        self.tag_collection.insert_tag_by_id("1000")
+        self.tag_collection.insert_tag_by_id("1001")
+
+        returned_tag = self.tag_collection.get_tag("1000")
+
+        self.assertEqual(Tag("1000"), returned_tag)
+

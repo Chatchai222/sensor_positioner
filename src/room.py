@@ -42,7 +42,6 @@ class Anchor:
         self._pos = in_pos
 
 
-
 class Tag:
     
 
@@ -59,6 +58,10 @@ class Tag:
         self._id = id
         self._name = "TagSensor_stud_name"
         self._many_dist_to_anchor_and_anchor = []
+
+
+    def get_id(self):
+        return self._id
 
 
     def get_name(self) -> str:
@@ -92,6 +95,14 @@ class Tag:
             many_dist_to_anchor_and_anchor_pos.append( [dist, anchor.get_position()])
         
         return self.__class__._pos_calculator.get_position_or_null_position(many_dist_to_anchor_and_anchor_pos)
+    
+
+    def __eq__(self, other):
+        return self._id == other.get_id()
+    
+
+    def __repr__(self):
+        return f"id: {self._id}, name: {self._name}, many_dist_to_anchor_and_anchor: {self._many_dist_to_anchor_and_anchor}"
 
 
 class AnchorCollection:
@@ -105,7 +116,7 @@ class AnchorCollection:
         return self._many_anchor
 
 
-    def insert_anchor(self, in_anchor_id, in_anchor_pos):
+    def insert_anchor_id_and_pos(self, in_anchor_id, in_anchor_pos):
         anchor = Anchor(in_anchor_id, in_anchor_pos)
         if anchor in self._many_anchor:
             raise self.__class__.InsertSameAnchorIdException("Insert anchor with same id")
@@ -143,6 +154,45 @@ class AnchorCollection:
         pass
 
 
+class TagCollection:
+    
+
+    def __init__(self):
+        self._many_tag = []
+        
+    
+    def get_many_tag(self):
+        return self._many_tag
+    
+
+    def insert_tag_by_id(self, in_tag_id):
+        in_tag = Tag(in_tag_id)
+        if in_tag in self._many_tag:
+            raise self.__class__.InsertSameTagIdException
+        else:
+            self._many_tag.append(in_tag)
+
+    
+    def get_tag(self, in_tag_id):
+        for tag in self._many_tag:
+            if tag.get_id() == in_tag_id:
+                return tag
+            
+        raise self.__class__.GetNonexistentTagIdException
+    
+    
+    def __repr__(self):
+        return f"many_tag: {self._many_tag}"
+    
+
+    class InsertSameTagIdException(Exception):
+        pass
+
+    
+    class GetNonexistentTagIdException(Exception):
+        pass
+    
+
 class Room:
 
     
@@ -159,7 +209,7 @@ class Room:
         try:
             self._anchor_collection.update_anchor_position(in_anchor_id, in_anchor_pos)
         except AnchorCollection.UpdateNonexistentAnchorIdException:
-            self._anchor_collection.insert_anchor(in_anchor_id, in_anchor_pos)
+            self._anchor_collection.insert_anchor_id_and_pos(in_anchor_id, in_anchor_pos)
     
 
     def update_anchor_name(self, in_anchor_id: str, in_name: str):
@@ -175,9 +225,6 @@ class Room:
     
 
     def upsert_tag_to_anchor_dist(self, in_tag_id, in_anchor_id, in_dist):
-        # anchor = self._get_anchor(in_anchor_id)
-        # if anchor is None:
-        #     return
         try:
             anchor = self._anchor_collection.get_anchor(in_anchor_id)
         except AnchorCollection.GetNonexistentAnchorIdException:
