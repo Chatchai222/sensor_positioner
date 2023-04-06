@@ -360,7 +360,7 @@ class TestTagCollection(unittest.TestCase):
         self.assertEqual(Tag("1000"), returned_tag)
 
 
-class TestTrilaterate(unittest.TestCase):
+class TestGoldenBehaviour(unittest.TestCase):
     
 
     def test_givenSensorData_thenReturnedPosition(self):
