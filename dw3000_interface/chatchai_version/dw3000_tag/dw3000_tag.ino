@@ -336,6 +336,8 @@ void loop() {
                      *   recording is done between by two different clocks (first clock is initiator's clock, second clock is 
                      *   responder clock)
                      *   
+                     *   #define DWT_TIME_UNITS      (1.0/499.2e6/128.0) //!< = 15.65e-12 
+                     *   
                      *   distance = time of flight * SPEED_OF_LIGHT
                      *   Since radio wave travel at the speed of light since it is an EM wave
                     */

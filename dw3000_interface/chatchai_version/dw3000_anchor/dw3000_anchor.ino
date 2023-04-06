@@ -16,7 +16,7 @@ const uint8_t PIN_SS = 4; // spi select pin
 /* Default communication configuration. We use default non-STS DW mode. 
  *  Too scared to change, so keeping it 
  *  STS: Short term synchronization, basically use more power to get more precise reading
- *  DW: Double word, meant fetch two "word" at once (in 32 bit system meant it grap 64 bit)
+ *  DW: Double word, meant fetch two "word" at once (in 32 bit system meant it grab 64 bit)
 */
 static dwt_config_t config = {
         5,               /* Channel number. */
@@ -41,8 +41,8 @@ static dwt_config_t config = {
  * ANT: Antenna 
  * DLY: Delay
 */
-#define TX_ANT_DLY 16385
-#define RX_ANT_DLY 16385
+#define TX_ANT_DLY 16385  // in device time unit
+#define RX_ANT_DLY 16385  // in device time unit
 
 /*
  * This part is absolutely hideous, instead of using placing the poll or response message
@@ -105,8 +105,8 @@ static uint32_t status_reg = 0;
 #define POLL_RX_TO_RESP_TX_DLY_UUS 450
 
 /* Timestamps of frames transmission/reception. */
-static uint64_t poll_rx_ts; // poll receive timestamp
-static uint64_t resp_tx_ts; // response receive timestammp
+static uint64_t poll_rx_ts; // poll receive timestamp in device time unit
+static uint64_t resp_tx_ts; // response receive timestammp in device time unit
 
 /* Values for the PG_DELAY and TX_POWER registers reflect the bandwidth and power of the spectrum at the current
  * temperature. These values can be calibrated prior to taking reference measurements. See NOTE 5 below.
@@ -240,23 +240,126 @@ void loop() {
                      *  "Timestamps and delayed transmission time are both expressed(represented) in device time units, so we just
                      *  have to add the desired response delay to response RX timestamp"
                      *  
+                     *  `UUS`: Ultra wideband microsecond
+                     *  `DWT`: Device time unit
+                     *  Delayed tranmission time resolution
+                     *  
+                     *  From `dw3000_device_api.cpp`
+                     *  void dwt_setdelayedtrxtime(uint32_t starttime)
+                        {
+                            dwt_write32bitoffsetreg(DX_TIME_ID, 0, starttime); // Note: bit 0 of this register is ignored
+                        } // end dwt_setdelayedtrxtime()
+                        
+             
+                     *  From `dw_shared_functions_defines.h`
+                     *  UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
+                     *  1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu. 
+                     *  #define UUS_TO_DWT_TIME 63898
+                     *  
+                     *  poll_rx_ts: poll receive timestamp in 40 bit with u64 type in device time unit
+                     *  POLL_RX_TO_RESP_TX_DLY_UUS: delay between frame of poll receive to response transmit in UWB microseconds
+                     *  UUS_TO_DWT_TIME: constant to convert Ultrawide band microsecond to device time unit
+                     *  resp_tx_time = response transmit time in 512 device time units represented with 32 unsigned bit
+                     *  dwt_setdelayedtrxtime(uint32_t startime): decawave transceiver toolset set dealyed transmission time
+                     *  
+                     *  poll receive to response transmit delay in ultrawideband microsecond:
+                     *  POLL_RX_TO_RESP_TX_DLY_UUS;
+                     *  
+                     *  poll receive to response transmit delay in device time unit:
+                     *  POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME;
+                     *  
+                     *  response transmit [date]time (in which the response message will be transmitted)
+                     *  represented with 40 bit with type u64 in resoultion of 1 device time unit:
+                     *  poll_rx_ts + (POLL_RX_TORESP_TX_DLY_UUS * UUS_TO_DWT_TIME);
+                     *  
+                     *  response transmit [date]time (in which the reponse message will be transmitted)
+                     *  represented with 32 bit with type uint64_t in resolution of 256 device time unit:
+                     *  ( poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME) ) >> 8;
+                     *  
+                     *  assign response transmit [date]time represented with 32 bit with uint64_t in resolution of
+                     *  256 device time unit to variable `resp_tx_time` with type uint32_t:
+                     *  resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
+                     *  
+                     *  set the response transmit [date]time which have a resolution of 512 device time units, 
+                     *  which are given resp_tx_time which has resolution of 256 device time unit with ignoring the
+                     *  0th bit which makes it 512 device time units
+                     *  dwt_setdelayedtrxtime(resp_tx_time);
                     */
                     resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
                     dwt_setdelayedtrxtime(resp_tx_time);
 
                     /* Response TX timestamp is the transmission time we programmed plus the antenna delay.
-                     *  0xFFFFFFFEUL  , the `UL` part is supposed to mean unsigned long 
+                     *  0xFFFFFFFEUL  , the `UL` part is supposed to mean unsigned long (32 bit unsigned integer)
+                     *  From `dw_shared_functions_defines.h`
+                     *  UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
+                     *  1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu. 
+                     *  
+                     *  (2 ** 32) * (15.65 * (10 ** -12)) = 0.067216 
+                     *  2 ** 9 = 512
+                     *  
+                     *  resp_tx_ts: response transmit timestamp represented with 40 bits in u64 type in device time unit
+                     *  #define DWT_TIME_UNITS      (1.0/499.2e6/128.0) //!< = 15.65e-12 s
+                     *  
+                     *  `resp_tx_time`: reponse transmit time represented in 32 bit with uint32_t with unit as (512 device time unit)
+                     *  
+                     *  response transmit time in 32 bit with uint32_t with unit as (256 device time unit): 
+                     *  resp_tx_time & 0xFFFFFFFEUL;
+                     *  
+                     *  response transmit time in 32 bit with uint64_t with unit as (256 device time unit):
+                     *  (uint64_t)(resp_tx_time & 0xFFFFFFFEUL);
+                     *  
+                     *  response transmit time in 40 bit with uint64_t with unit as (1 device time unit):
+                     *  ((uint64_t)(resp_tx_time & 0xFFFFFFFEUL) << 8);
+                     *  
+                     *  response trnasmit time in 40 bit with uint64_t in (1 device time unit) with transmit antenna delay:
+                     *  (((uint64_t)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
+                     *  
                     */
                     resp_tx_ts = (((uint64_t)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
 
-                    /* Write all timestamps in the final message. See NOTE 8 below. */
+                    /* Write all timestamps in the final message. See NOTE 8 below.
+                     *  
+                     * set the poll receive timestamp part of response message with the first 32 bit 
+                     * of the 40 bit poll_rx_ts in uint64_t with unit as (1 device time unit)
+                     * response_message.set_poll_receive_timestamp(poll_rx_ts[0:32+1])
+                     * resp_msg_set_ts(&tx_resp_msg[RESP_MSG_POLL_RX_TS_IDX], poll_rx_ts);  
+                     * 
+                     * set the response transmit timestamp part of response message with the first 32 bit 
+                     * of the 40 bit resp_tx_ts in uint64_t with unit as (1 device time unit)
+                     * response_message.set_response_transmit_timestamp(resp_tx_ts[0:32+1])
+                     * resp_msg_set_ts(&tx_resp_msg[RESP_MSG_RESP_TX_TS_IDX], poll_rx_ts); 
+                     * 
+                     * 
+                    */
                     resp_msg_set_ts(&tx_resp_msg[RESP_MSG_POLL_RX_TS_IDX], poll_rx_ts);
                     resp_msg_set_ts(&tx_resp_msg[RESP_MSG_RESP_TX_TS_IDX], resp_tx_ts);
 
                     /* Write and send the response message. See NOTE 9 below. */
                     tx_resp_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
+                    // dwt_writetxdata = write transmit data
                     dwt_writetxdata(sizeof(tx_resp_msg), tx_resp_msg, 0); /* Zero offset in TX buffer. */
+                    // dwt_writetxfctrl = write to transmit frame control register  
                     dwt_writetxfctrl(sizeof(tx_resp_msg), 0, 1); /* Zero offset in TX buffer, ranging. */
+
+                    /*
+                     ------------------------------------------------------------------------------------------------------------------
+                       * @brief This call initiates the transmission, input parameter indicates which TX mode is used see below
+                       *
+                       * input parameters:
+                       * @param mode - if mode = DWT_START_TX_IMMEDIATE - immediate TX (no response expected)
+                       *               if mode = DWT_START_TX_DELAYED - delayed TX (no response expected)  at specified time (time in DX_TIME register)
+                       *               if mode = DWT_START_TX_DLY_REF - delayed TX (no response expected)  at specified time (time in DREF_TIME register + any time in DX_TIME register)
+                       *               if mode = DWT_START_TX_DLY_RS  - delayed TX (no response expected)  at specified time (time in RX_TIME_0 register + any time in DX_TIME register)
+                       *               if mode = DWT_START_TX_DLY_TS  - delayed TX (no response expected)  at specified time (time in TX_TIME_LO register + any time in DX_TIME register)
+                       *               if mode = DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED - immediate TX (response expected - so the receiver will be automatically turned on after TX is done)
+                       *               if mode = DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED - delayed TX (response expected - so the receiver will be automatically turned on after TX is done)
+                       *               if mode = DWT_START_TX_CCA - Send the frame if no preamble detected within PTO time
+                       *               if mode = DWT_START_TX_CCA  | DWT_RESPONSE_EXPECTED - Send the frame if no preamble detected within PTO time and then enable RX
+                       * output parameters
+                       *
+                       * returns DWT_SUCCESS for success, or DWT_ERROR for error (e.g. a delayed transmission will be cancelled if the delayed time has passed)
+                      int dwt_starttx(uint8_t mode);
+                    */
                     ret = dwt_starttx(DWT_START_TX_DELAYED);
 
                     /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. See NOTE 10 below. */
@@ -266,7 +369,7 @@ void loop() {
                         while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK))
                         { };
 
-                        /* Clear TXFRS event. */
+                        /* Clear TXFRS event. transmit frame sent event from status register */
                         dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
 
                         /* Increment frame sequence number after transmission of the poll message (modulo 256). */
@@ -277,7 +380,7 @@ void loop() {
         }
         else
         {
-            /* Clear RX error events in the DW IC status register. */
+            /* Clear RX error events in the DW IC status register. clear receive frame error from status register */
             dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
         }
 }
