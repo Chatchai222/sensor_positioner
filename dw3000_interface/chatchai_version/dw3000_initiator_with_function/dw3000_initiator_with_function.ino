@@ -293,7 +293,7 @@ void setup() {
   UART_init();
   test_run_info((unsigned char *)APP_NAME);
 
-  /* Configure SPI rate, DW3000 supports up to 38 MHz */
+  /* Configure SPI rate, DW3000 supports up to 38 MHz, baud rate 115200? */
   /* Reset DW IC */
   spiBegin(PIN_INTERRUPT_REQUEST, PIN_RESET);
   spiSelect(PIN_SLAVE_SELECT);
