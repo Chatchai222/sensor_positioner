@@ -1,6 +1,6 @@
 /*
- * Modification with comments of the DW3000 example code by MakerFabs for "ex_06a_ss_twr_initiator"
- * Hopefully with the added comment and some modification the code will be easier to use since the library
+ * A format with white space and extra comments of the DW3000 example code by MakerFabs for "ex_06a_ss_twr_initiator"
+ * Hopefully with the added comment and some formatting of the code will be easier to use since the library
  * for DW3000 has an interface for lower-level control
 */
 
@@ -81,7 +81,7 @@ static dwt_config_t config = {
  *    All messages end with a 2-byte checksum automatically set by DW IC.
 */
 /* Frames used in the ranging process. See NOTE 3 below. */
-/*                                0     1   2   3     4     5    6    7    8    9   10  11*/
+/*                                0     1   2   3     4     5    6    7    8    9   10  11 12 13 14 15 16 17 18 19*/
 static uint8_t tx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0};
 static uint8_t rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 /* Length of the common part of the message (up to and including the function code, see NOTE 3 below). */
@@ -93,6 +93,7 @@ static uint8_t rx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0
 #define RESP_MSG_TS_LEN 4 // response message timestamp length (timestamp is 32 bit)
 /* Frame sequence number, incremented after each transmission. */
 static uint8_t frame_seq_nb = 0;
+
 
 /* Buffer to store received response message.
  * Its size is adjusted to longest frame that this example code is supposed to handle. */
@@ -175,40 +176,42 @@ void setup() {
   }
 
 
-    /* Configure the TX spectrum parameters (power, PG delay and PG count) 
-     *  PG delay: delay time when a singal is transmitted and time when power amplifier (PA) is turned on
-     *  the purpose of PG delay to give enough time for PA enough time to stabilize
-     *  PG count: number of delay cycles that are used to stabilize the power amplifier
-    */
-    dwt_configuretxrf(&txconfig_options);
+  /* Configure the TX spectrum parameters (power, PG delay and PG count) 
+   *  PG delay: delay time when a singal is transmitted and time when power amplifier (PA) is turned on
+   *  the purpose of PG delay to give enough time for PA enough time to stabilize
+   *  PG count: number of delay cycles that are used to stabilize the power amplifier
+  */
+  dwt_configuretxrf(&txconfig_options);
 
-    /* Apply default antenna delay value. See NOTE 2 below. 
-    * Antenna delay is used for calibration purposes for calculating distance
-    */
-    dwt_setrxantennadelay(RX_ANT_DLY);
-    dwt_settxantennadelay(TX_ANT_DLY);
+  /* Apply default antenna delay value. See NOTE 2 below. 
+  * Antenna delay is used for calibration purposes for calculating distance
+  */
+  dwt_setrxantennadelay(RX_ANT_DLY);
+  dwt_settxantennadelay(TX_ANT_DLY);
 
-    /* Set expected response's delay and timeout. See NOTE 1 and 5 below.
-     * As this example only handles one incoming frame with always the same delay and timeout, those values can be set here once for all.
-     * setrxaftertxdelay: set delay between transmitting message and turning on the receiver to listen for a response
-     * setrxtimeout: set timeout for receiver to listen for a response, if receiver does not 
-     * receive a response within this time, it will stop listening and assume that
-     * the response was not received 
-     */
-    dwt_setrxaftertxdelay(POLL_TX_TO_RESP_RX_DLY_UUS);
-    dwt_setrxtimeout(RESP_RX_TIMEOUT_UUS);
+  /* Set expected response's delay and timeout. See NOTE 1 and 5 below.
+   * As this example only handles one incoming frame with always the same delay and timeout, those values can be set here once for all.
+   * setrxaftertxdelay: set delay between transmitting message and turning on the receiver to listen for a response
+   * setrxtimeout: set timeout for receiver to listen for a response, if receiver does not 
+   * receive a response within this time, it will stop listening and assume that
+   * the response was not received
+   */
+  dwt_setrxaftertxdelay(POLL_TX_TO_RESP_RX_DLY_UUS);
+  dwt_setrxtimeout(RESP_RX_TIMEOUT_UUS);
 
-    /* Next can enable TX/RX states output on GPIOs 5 and 6 to help debug, and also TX/RX LEDs
-     * Note, in real low power applications the LEDs should not be used. 
-     * LNA: Low noise amplifier, which amplify weak signals received by antenna
-     * PA: power amplifier, which amplify signal to higher power level so it can be transmitted by antenna
-     */
-    dwt_setlnapamode(DWT_LNA_ENABLE | DWT_PA_ENABLE);
+  /* Next can enable TX/RX states output on GPIOs 5 and 6 to help debug, and also TX/RX LEDs
+   * Note, in real low power applications the LEDs should not be used. 
+   * LNA: Low noise amplifier, which amplify weak signals received by antenna
+   * PA: power amplifier, which amplify signal to higher power level so it can be transmitted by antenna
+   */
+  dwt_setlnapamode(DWT_LNA_ENABLE | DWT_PA_ENABLE);
 }
 
 void loop() {
+        
         /* Write frame data to DW IC and prepare transmission. See NOTE 7 below. */
         tx_poll_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
+        
         /*
          * TXFRS - Transmit frame sent
          * Write to status register that the transmit frame was sent
@@ -289,9 +292,11 @@ void loop() {
                      *  (Recall that clocks depend on oscillator crystals using piezoelectirc effect)
                      *  `dwt_readclockoffset()` is called on the initiator side and it reads 
                      *  the clock offset value of the responder side. 
-                     *  ?? Still confused how `dwt_readclockoffset()` get the offset of the responder ??
+                     *  ?? Still confused how `dwt_readclockoffset()` get the offset of what initiator or responder???
                      *  2 ** 26 = roughly 67,100,000 
-                     *  
+                     *   NOTE 11. The use of the clock offset value to correct the TOF calculation, significantly 
+                     *   improves the result of the SS-TWR where the remote 
+                     *   responder unit's clock is a number of PPM offset from the local initiator unit's clock. 
                     */
                     clockOffsetRatio = ((float)dwt_readclockoffset()) / (uint32_t)(1<<26);
 
@@ -325,11 +330,11 @@ void loop() {
                      *   rt: response transmit timestamp = resp_tx_ts
                      *   rr: response receive timestamp = resp_rx_ts
                      *   
-                     *   rtd_init: round trip initiator = rr -pt
+                     *   rtd_init: round trip initiator = rr - pt
                      *   rtd_resp: round trip responder = rt - pr
                      *   
                      *   
-                     *   time of flight = ( (rr - pt) - (pr - rt) ) / 2
+                     *   time of flight = ( (rr - pt) - (rt - pr) ) / 2
                      *                  = ( rtd_init - rtd_resp ) / 2
                      *                  
                      *   clockOffSetRatio is used for calibrating the difference in ?? clock speed ?? since the timestamp
@@ -347,6 +352,7 @@ void loop() {
                     /* Display computed distance on LCD. */
                     snprintf(dist_str, sizeof(dist_str), "DIST: %3.2f m", distance);
                     test_run_info((unsigned char *)dist_str);
+                    
                 }
             }
         }

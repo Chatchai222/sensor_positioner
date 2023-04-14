@@ -15,8 +15,6 @@ const uint8_t PIN_SS = 4; // spi select pin
 
 /* Default communication configuration. We use default non-STS DW mode. 
  *  Too scared to change, so keeping it 
- *  STS: Short term synchronization, basically use more power to get more precise reading
- *  DW: Double word, meant fetch two "word" at once (in 32 bit system meant it grab 64 bit)
 */
 static dwt_config_t config = {
         5,               /* Channel number. */
