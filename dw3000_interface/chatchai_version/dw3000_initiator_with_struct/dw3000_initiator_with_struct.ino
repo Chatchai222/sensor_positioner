@@ -112,6 +112,10 @@ uint8_t PollMessage_get_frame_sequence_number(){
     return (uint8_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH);
 }
 
+void PollMessage_set_frame_sequence_number(uint8_t in_seq_num){
+    _PollMessage_write_array(&_poll_message_array[POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH, in_seq_num);
+}
+
 uint16_t PollMessage_get_personal_area_network_id(){
     return (uint16_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX], POLL_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH);
 }
@@ -120,8 +124,16 @@ uint16_t PollMessage_get_destination_address(){
     return (uint16_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_DESTINATION_ADDRESS_INDEX], POLL_MESSAGE_DESTINATION_ADDRESS_LENGTH);
 }
 
+void PollMessage_set_destination_address(uint16_t in_dest){
+    _PollMessage_write_array(&_poll_message_array[POLL_MESSAGE_DESTINATION_ADDRESS_INDEX], POLL_MESSAGE_DESTINATION_ADDRESS_LENGTH, in_dest);
+}
+
 uint16_t PollMessage_get_source_address(){
     return (uint16_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_SOURCE_ADDRESS_INDEX], POLL_MESSAGE_SOURCE_ADDRESS_LENGTH);
+}
+
+void PollMessage_set_source_address(uint16_t in_source_address){
+    _PollMessage_write_array(&_poll_message_array[POLL_MESSAGE_SOURCE_ADDRESS_INDEX], POLL_MESSAGE_SOURCE_ADDRESS_LENGTH, in_source_address);
 }
 
 uint8_t PollMessage_get_function_code(){
@@ -147,8 +159,14 @@ uint32_t _PollMessage_read_array(uint8_t *frame_field, uint8_t field_length){
     return output;
 }
 
-
-
+void _PollMessage_write_array(uint8_t *frame_field, uint8_t field_length, uint32_t in_field){
+    uint32_t num_to_write = in_field;
+    int i;
+    for(i = 0; i < field_length; i++){
+        frame_field[i] = (uint8_t)num_to_write;
+        num_to_write = num_to_write >> 8;
+    }
+}
 
 
 
@@ -170,7 +188,10 @@ void loop() {
     responder_initialize(&my_responder, 100);
     responder_set_frame_sequence_number(&my_responder, 66);
     responder_print(&my_responder);
-
+    
+    PollMessage_set_frame_sequence_number(66);
+    PollMessage_set_destination_address(1000);
+    PollMessage_set_source_address(2000);
     PollMessage_print();
     
     Serial.print("End of main loop \n");
