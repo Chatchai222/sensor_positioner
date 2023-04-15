@@ -140,6 +140,14 @@ uint8_t PollMessage_get_function_code(){
     return (uint8_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_FUNCTION_CODE_INDEX], POLL_MESSAGE_FUNCTION_CODE_LENGTH);
 }
 
+uint16_t PollMessage_get_array_sizeof(){
+    return sizeof(_poll_message_array);
+}
+
+uint8_t* PollMessage_get_array(){
+    return _poll_message_array;
+}
+
 void PollMessage_print(){    
     Serial.print("PollMessage: \n");
     Serial.print("    frame_control: 0x"); Serial.println(PollMessage_get_frame_control(), HEX);
@@ -171,6 +179,95 @@ void _PollMessage_write_array(uint8_t *frame_field, uint8_t field_length, uint32
 
 
 
+#define RESPONSE_MESSAGE_FRAME_CONTROL_INDEX 0
+#define RESPONSE_MESSAGE_FRAME_CONTROL_LENGTH 2
+
+#define RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX 2
+#define RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH 1
+
+#define RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX 3 
+#define RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH 2
+
+#define RESPONSE_MESSAGE_DESTINATION_ADDRESS_INDEX 5
+#define RESPONSE_MESSAGE_DESTINATION_ADDRESS_LENGTH 2
+
+#define RESPONSE_MESSAGE_SOURCE_ADDRESS_INDEX 7
+#define RESPONSE_MESSAGE_SOURCE_ADDRESS_LENGTH 2
+
+#define RESPONSE_MESSAGE_FUNCTION_CODE_INDEX 9
+#define RESPONSE_MESSAGE_FUNCTION_CODE_LENGTH 1
+
+#define RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_INDEX 10
+#define RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_LENGTH 4
+
+#define RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_INDEX 14
+#define RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_LENGTH 4
+//                                          0     1     2  3     4      5    6    7    8   9    10 11 12 13 14 15 16 17 18 19
+static uint8_t _response_message_array[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+uint16_t ResponseMessage_get_frame_control(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_FRAME_CONTROL_INDEX], RESPONSE_MESSAGE_FRAME_CONTROL_LENGTH);
+}
+
+uint8_t ResponseMessage_get_frame_sequence_number(){
+    return (uint8_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH);
+}
+
+uint16_t ResponseMessage_get_personal_area_network_id(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX], RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH);
+}
+
+uint16_t ResponseMessage_get_destination_address(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_DESTINATION_ADDRESS_INDEX], RESPONSE_MESSAGE_DESTINATION_ADDRESS_LENGTH);
+}
+
+uint16_t ResponseMessage_get_source_address(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_SOURCE_ADDRESS_INDEX], RESPONSE_MESSAGE_SOURCE_ADDRESS_LENGTH);
+}
+
+uint8_t ResponseMessage_get_function_code(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_FUNCTION_CODE_INDEX], RESPONSE_MESSAGE_FUNCTION_CODE_LENGTH);
+}
+
+uint32_t ResponseMessage_get_poll_message_receive_timestamp(){
+    return (uint32_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_INDEX], RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_LENGTH);
+}
+
+uint32_t ResponseMessage_get_response_message_transmit_timestamp(){
+    return (uint32_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_INDEX], RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_LENGTH);
+}
+
+void ResponseMessage_print(){
+    Serial.print("ResponseMessage: \n");
+    Serial.print("    frame_control: 0x"); Serial.println(ResponseMessage_get_frame_control(), HEX);
+    Serial.print("    frame_sequence_number: "); Serial.println(ResponseMessage_get_frame_sequence_number());
+    Serial.print("    personal_area_network_id: 0x"); Serial.println(ResponseMessage_get_personal_area_network_id(), HEX);
+    Serial.print("    destination_address: "); Serial.println(ResponseMessage_get_destination_address());
+    Serial.print("    source_address: "); Serial.println(ResponseMessage_get_source_address());
+    Serial.print("    function_code: "); Serial.println(ResponseMessage_get_function_code());
+    Serial.print("    poll_message_receive_timestamp: "); Serial.println(ResponseMessage_get_poll_message_receive_timestamp());
+    Serial.print("    response_message_transmit_timestamp: "); Serial.println(ResponseMessage_get_response_message_transmit_timestamp());
+}
+
+uint32_t _ResponseMessage_read_array(uint8_t *frame_field, uint8_t field_length){
+    int i;
+    uint32_t output = 0;
+    for(i = 0; i < field_length; i++){
+        output += (uint32_t)frame_field[i] << (i * 8);
+    }
+    return output;
+}
+
+void _ResponseMessage_write_array(uint8_t *frame_field, uint8_t field_length, uint32_t in_field){
+    uint32_t num_to_write = in_field;
+    int i;
+    for(i = 0; i < field_length; i++){
+        frame_field[i] = (uint8_t)num_to_write;
+        num_to_write = num_to_write >> 8;
+    }
+}
+
+
 void setup() {
     UART_init();
     spiBegin(PIN_INTERRUPT_REQUEST, PIN_RESET);
@@ -183,6 +280,7 @@ void setup() {
 void loop() {
     // put your main code here, to run repeatedly:
     delay(1000);
+    Serial.print("Start of main loop \n");
 
     struct Responder my_responder;
     responder_initialize(&my_responder, 100);
@@ -193,6 +291,8 @@ void loop() {
     PollMessage_set_destination_address(1000);
     PollMessage_set_source_address(2000);
     PollMessage_print();
+
+    ResponseMessage_print();
     
     Serial.print("End of main loop \n");
 }
