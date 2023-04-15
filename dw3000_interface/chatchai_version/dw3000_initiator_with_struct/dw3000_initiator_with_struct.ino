@@ -213,6 +213,10 @@ uint8_t ResponseMessage_get_frame_sequence_number(){
     return (uint8_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH);
 }
 
+void ResponseMessage_set_frame_sequence_number(uint8_t in_seq_num){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH, in_seq_num);
+}
+
 uint16_t ResponseMessage_get_personal_area_network_id(){
     return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX], RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH);
 }
@@ -221,8 +225,16 @@ uint16_t ResponseMessage_get_destination_address(){
     return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_DESTINATION_ADDRESS_INDEX], RESPONSE_MESSAGE_DESTINATION_ADDRESS_LENGTH);
 }
 
+void ResponseMessage_set_destination_address(uint16_t in_dest_addr){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_DESTINATION_ADDRESS_INDEX], RESPONSE_MESSAGE_DESTINATION_ADDRESS_LENGTH, in_dest_addr);
+}
+
 uint16_t ResponseMessage_get_source_address(){
     return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_SOURCE_ADDRESS_INDEX], RESPONSE_MESSAGE_SOURCE_ADDRESS_LENGTH);
+}
+
+void ResponseMessage_set_source_address(uint16_t in_src_addr){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_SOURCE_ADDRESS_INDEX], RESPONSE_MESSAGE_SOURCE_ADDRESS_LENGTH, in_src_addr);
 }
 
 uint8_t ResponseMessage_get_function_code(){
@@ -233,8 +245,24 @@ uint32_t ResponseMessage_get_poll_message_receive_timestamp(){
     return (uint32_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_INDEX], RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_LENGTH);
 }
 
+void ResponseMessage_set_poll_message_receive_timestamp(uint32_t poll_msg_receive_ts){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_INDEX], RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_LENGTH, poll_msg_receive_ts);
+}
+
 uint32_t ResponseMessage_get_response_message_transmit_timestamp(){
     return (uint32_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_INDEX], RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_LENGTH);
+}
+
+void ResponseMessage_set_response_message_transmit_timestamp(uint32_t resp_transmit_ts){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_INDEX], RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_LENGTH, resp_transmit_ts);
+}
+
+uint16_t ResponseMessage_get_array_sizeof(){
+    return sizeof(_response_message_array);
+}
+
+uint8_t* ResponseMessage_get_array(){
+    return _response_message_array;
 }
 
 void ResponseMessage_print(){
@@ -291,7 +319,13 @@ void loop() {
     PollMessage_set_destination_address(1000);
     PollMessage_set_source_address(2000);
     PollMessage_print();
-
+    
+    ResponseMessage_set_frame_sequence_number(13);
+    ResponseMessage_set_destination_address(60);
+    ResponseMessage_set_source_address(33);
+    ResponseMessage_set_poll_message_receive_timestamp(69);
+    ResponseMessage_set_response_message_transmit_timestamp(420);
+    ResponseMessage_get_array()[RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX] = 15;
     ResponseMessage_print();
     
     Serial.print("End of main loop \n");
