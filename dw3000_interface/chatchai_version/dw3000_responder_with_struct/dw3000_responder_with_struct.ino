@@ -346,7 +346,7 @@ void DW3000Chip_initialize_for_responder(){
 
 
 
-uint16_t _RESPONDER_ID = 1000;
+uint16_t _RESPONDER_ID = 1001;
 
 void wait_for_poll_message_and_transmit_back_response_message(){
     
@@ -414,6 +414,7 @@ void _update_response_message_from_poll_message_and_timestamp(){
     uint64_t poll_receive_timestamp;
     uint64_t response_transmit_timestamp;
     int transmit_returned;
+    uint16_t poll_message_source_address = PollMessage_get_source_address();
 
     // get 40 bit timestamp in type unsigned64int in device time unit
     poll_receive_timestamp = get_rx_timestamp_u64();
@@ -433,7 +434,8 @@ void _update_response_message_from_poll_message_and_timestamp(){
 
     ResponseMessage_set_poll_message_receive_timestamp(poll_receive_timestamp);
     ResponseMessage_set_response_message_transmit_timestamp(response_transmit_timestamp);
-
+    ResponseMessage_set_source_address(_RESPONDER_ID);
+    ResponseMessage_set_destination_address(poll_message_source_address);
 }
 
 int _transmit_response_message(){

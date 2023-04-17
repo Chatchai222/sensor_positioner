@@ -48,6 +48,40 @@ void responder_print(struct Responder *self){
     Serial.print("    frame_sequence_number: "); Serial.println(self->_frame_sequence_number);
 }
 
+
+
+
+// RoundRobinResponder
+
+#define _RESPONDER_ARRAY_SIZE 3
+int _RoundRobinResponder_current_index = 0;
+struct Responder _responder_array[_RESPONDER_ARRAY_SIZE] = {
+    {._id = 1000, ._frame_sequence_number = 0},
+    {._id = 1001, ._frame_sequence_number = 0},
+    {._id = 1002, ._frame_sequence_number = 0},
+};
+
+void RoundRobinResponder_increment_index(){
+    _RoundRobinResponder_current_index++;
+    _RoundRobinResponder_current_index %= _RESPONDER_ARRAY_SIZE;
+}
+
+struct Responder* RoundRobinResponder_get_responder_ptr(){
+    return &_responder_array[_RoundRobinResponder_current_index];
+}
+
+void RoundRobinResponder_print(){
+    int i;
+    Serial.print("RoundRobinResponder: \n");
+    Serial.print("    current_index: "); Serial.println(_RoundRobinResponder_current_index);
+    Serial.print("    responder_array: \n");
+    for (i = 0; i < _RESPONDER_ARRAY_SIZE; i++){
+        responder_print(&_responder_array[i]);
+    }
+}
+
+
+
 struct Initiator {
     uint16_t _id;
 };
@@ -60,7 +94,10 @@ uint16_t initiator_get_id(struct Initiator *self){
     return self->_id;
 }
 
-
+void initiator_print(struct Initiator *self){
+    Serial.print("initiator: \n");
+    Serial.print("    id: "); Serial.println(initiator_get_id(self));
+}
 
 
 /*
@@ -400,9 +437,29 @@ void DW3000Chip_initialize_for_initiator(){
     dwt_setlnapamode(DWT_LNA_ENABLE | DWT_PA_ENABLE);
 }
 
+
+
+
 // Ranger
-double Ranger_get_distance_or_null(struct Initiator *initiator_ptr, struct Responder *responder_ptr) {
-    // single attempt get distance?
+const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 20;
+const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 100; 
+
+double Ranger_get_distance_or_null(struct Initiator* initiator_ptr, struct Responder* responder_ptr){
+    double distance;
+    int i;
+    for (i = 0; i < _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP; i++){
+        distance = Ranger_single_attempt_get_distance_or_null(initiator_ptr, responder_ptr);
+        if (distance != NULL){
+            break;
+        }
+        Sleep(_Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND);
+    }
+
+    return distance;
+}
+
+double Ranger_single_attempt_get_distance_or_null(struct Initiator *initiator_ptr, struct Responder *responder_ptr) {
+    
     _Ranger_update_poll_message(initiator_ptr, responder_ptr);
     responder_increment_frame_sequence_number(responder_ptr);
 
@@ -556,6 +613,9 @@ double _Ranger_calculate_distance(){
     return distance;
 }
 
+
+
+
 void my_debug() {
     delay(1000);
     Serial.print("Start of main loop \n");
@@ -577,6 +637,12 @@ void my_debug() {
     ResponseMessage_set_response_message_transmit_timestamp(420);
     ResponseMessage_get_array()[RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX] = 15;
     ResponseMessage_print();
+    
+    struct Responder* responder_ptr;
+    responder_ptr = RoundRobinResponder_get_responder_ptr();
+    responder_set_frame_sequence_number(responder_ptr, 98);
+    RoundRobinResponder_increment_index();
+    RoundRobinResponder_print();
 
     Serial.print("End of main loop \n");
 }
@@ -589,18 +655,25 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    struct Initiator my_initiator;
-    initiator_initialize(&my_initiator, 17750);
-    
-    struct Responder my_responder;
-    responder_initialize(&my_responder, 16727);
+    Serial.println("Start of loop initiator with struct");
 
-    double distance = Ranger_get_distance_or_null(&my_initiator, &my_responder);
+    struct Initiator initiator;
+    initiator_initialize(&initiator, 2000);
+    
+    struct Responder* responder_ptr;
+    responder_ptr = RoundRobinResponder_get_responder_ptr();
+    RoundRobinResponder_increment_index();
+
+    double distance = Ranger_get_distance_or_null(&initiator, responder_ptr);
     if (distance == NULL){
         Serial.println("ranger failed to get distance");
     } else {
         Serial.print("distance is: "); Serial.println(distance);
     }
+    initiator_print(&initiator);
+    responder_print(responder_ptr);
 
+    Serial.println("End of loop initiator with struct");
     Sleep(200);
+
 }
