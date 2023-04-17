@@ -6,48 +6,16 @@
 
 #include "dw3000.h"
 
-#define APP_NAME "SS TWR RESP v1.0"
+#define APP_NAME "SS TWR RESP with struct v1.0"
 
 // connection pins
-const uint8_t PIN_RST = 27; // reset pin
-const uint8_t PIN_IRQ = 34; // irq pin
-const uint8_t PIN_SS = 4;   // spi select pin
+const uint8_t PIN_RESET = 27; // reset pin
+const uint8_t PIN_INTERRUPT_REQUEST = 34; // irq pin
+const uint8_t PIN_SLAVE_SELECT = 4;   // spi select pin
 
-/* Default communication configuration. We use default non-STS DW mode.
- *  Too scared to change, so keeping it
- */
-static dwt_config_t config = {
-    5,                /* Channel number. */
-    DWT_PLEN_128,     /* Preamble length. Used in TX only. */
-    DWT_PAC8,         /* Preamble acquisition chunk size. Used in RX only. */
-    9,                /* TX preamble code. Used in TX only. */
-    9,                /* RX preamble code. Used in RX only. */
-    1,                /* 0 to use standard 8 symbol SFD, 1 to use non-standard 8 symbol, 2 for non-standard 16 symbol SFD and 3 for 4z 8 symbol SDF type */
-    DWT_BR_6M8,       /* Data rate. */
-    DWT_PHRMODE_STD,  /* PHY header mode. */
-    DWT_PHRRATE_STD,  /* PHY header rate. */
-    (129 + 8 - 8),    /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
-    DWT_STS_MODE_OFF, /* STS disabled */
-    DWT_STS_LEN_64,   /* STS length see allowed values in Enum dwt_sts_lengths_e */
-    DWT_PDOA_M0       /* PDOA mode off */
-};
-
-/* Default antenna delay values for 64 MHz PRF. See NOTE 2 below.
- * PRF: Pulse repetition frequency
- * TX: Transmit
- * RX: Receive
- * ANT: Antenna
- * DLY: Delay
- */
-#define TX_ANT_DLY 16385 // in device time unit
-#define RX_ANT_DLY 16385 // in device time unit
 
 /*
- * This part is absolutely hideous, instead of using placing the poll or response message
- * in some type of dataclass or struct and use getter methods, it straight up write the message
- * into the array and uses indexes to access each part of the message
- *
- * The frames used here are Decawave specific ranging frames, complying with the IEEE 802.15.4 standard data frame encoding. T
+ *  * The frames used here are Decawave specific ranging frames, complying with the IEEE 802.15.4 standard data frame encoding. T
  * Poll and Response message frame have the same starting format
  *  The first 10 bytes of those frame are common and are composed of the following fields:
  *     - byte 0/1: frame control (0x8841 to indicate a data frame using 16-bit addressing)
@@ -68,326 +36,440 @@ static dwt_config_t config = {
  *     - byte 14 -> 17: response message transmission timestamp.
  *    All messages end with a 2-byte checksum automatically set by DW IC.
  */
-/* Frames used in the ranging process. See NOTE 3 below. */
-static uint8_t rx_poll_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0};
-static uint8_t tx_resp_msg[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-/* Length of the common part of the message (up to and including the function code, see NOTE 3 below). */
-#define ALL_MSG_COMMON_LEN 10
-/* Index to access some of the fields in the frames involved in the process. */
-#define ALL_MSG_SN_IDX 2
-#define RESP_MSG_POLL_RX_TS_IDX 10
-#define RESP_MSG_RESP_TX_TS_IDX 14
-#define RESP_MSG_TS_LEN 4
-/* Frame sequence number, incremented after each transmission. */
-static uint8_t frame_seq_nb = 0;
+#define POLL_MESSAGE_FRAME_CONTROL_INDEX 0
+#define POLL_MESSAGE_FRAME_CONTROL_LENGTH 2
 
-/* Buffer to store received messages.
- * Its size is adjusted to longest frame that this example code is supposed to handle. */
-#define RX_BUF_LEN 12 // Must be less than FRAME_LEN_MAX_EX
-static uint8_t rx_buffer[RX_BUF_LEN];
+#define POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX 2
+#define POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH 1
+
+#define POLL_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX 3
+#define POLL_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH 2
+
+#define POLL_MESSAGE_DESTINATION_ADDRESS_INDEX 5
+#define POLL_MESSAGE_DESTINATION_ADDRESS_LENGTH 2
+
+#define POLL_MESSAGE_SOURCE_ADDRESS_INDEX 7
+#define POLL_MESSAGE_SOURCE_ADDRESS_LENGTH 2
+
+#define POLL_MESSAGE_FUNCTION_CODE_INDEX 9
+#define POLL_MESSAGE_FUNCTION_CODE_LENGTH 1
+//                                      0     1     2  3     4      5    6    7    8   9    10 11
+static uint8_t _poll_message_array[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'W', 'A', 'V', 'E', 0xE0, 0, 0};
+
+uint16_t PollMessage_get_frame_control(){
+    return (uint16_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_FRAME_CONTROL_INDEX], POLL_MESSAGE_FRAME_CONTROL_LENGTH);
+}
+
+uint8_t PollMessage_get_frame_sequence_number(){
+    return (uint8_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH);
+}
+
+void PollMessage_set_frame_sequence_number(uint8_t in_seq_num){
+    _PollMessage_write_array(&_poll_message_array[POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], POLL_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH, in_seq_num);
+}
+
+void PollMessage_increment_frame_sequence_number(){
+    uint8_t frame_seq_num = PollMessage_get_frame_sequence_number();
+    frame_seq_num = (frame_seq_num + 1) % 255;
+    PollMessage_set_frame_sequence_number(frame_seq_num);
+}
+
+uint16_t PollMessage_get_personal_area_network_id(){
+    return (uint16_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX], POLL_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH);
+}
+
+uint16_t PollMessage_get_destination_address(){
+    return (uint16_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_DESTINATION_ADDRESS_INDEX], POLL_MESSAGE_DESTINATION_ADDRESS_LENGTH);
+}
+
+void PollMessage_set_destination_address(uint16_t in_dest){
+    _PollMessage_write_array(&_poll_message_array[POLL_MESSAGE_DESTINATION_ADDRESS_INDEX], POLL_MESSAGE_DESTINATION_ADDRESS_LENGTH, in_dest);
+}
+
+uint16_t PollMessage_get_source_address(){
+    return (uint16_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_SOURCE_ADDRESS_INDEX], POLL_MESSAGE_SOURCE_ADDRESS_LENGTH);
+}
+
+void PollMessage_set_source_address(uint16_t in_source_address){
+    _PollMessage_write_array(&_poll_message_array[POLL_MESSAGE_SOURCE_ADDRESS_INDEX], POLL_MESSAGE_SOURCE_ADDRESS_LENGTH, in_source_address);
+}
+
+uint8_t PollMessage_get_function_code(){
+    return (uint8_t)_PollMessage_read_array(&_poll_message_array[POLL_MESSAGE_FUNCTION_CODE_INDEX], POLL_MESSAGE_FUNCTION_CODE_LENGTH);
+}
+
+uint16_t PollMessage_get_array_sizeof(){
+    return sizeof(_poll_message_array);
+}
+
+uint8_t* PollMessage_get_array(){
+    return _poll_message_array;
+}
+
+void PollMessage_print(){
+    Serial.print("PollMessage: \n");
+    Serial.print("    frame_control: 0x"); Serial.println(PollMessage_get_frame_control(), HEX);
+    Serial.print("    frame_sequence_number: "); Serial.println(PollMessage_get_frame_sequence_number());
+    Serial.print("    personal_area_network_id: 0x"); Serial.println(PollMessage_get_personal_area_network_id(), HEX);
+    Serial.print("    destination_address: "); Serial.println(PollMessage_get_destination_address());
+    Serial.print("    source_address: "); Serial.println(PollMessage_get_source_address());
+    Serial.print("    function_code: "); Serial.println(PollMessage_get_function_code());
+}
+
+uint32_t _PollMessage_read_array(uint8_t *frame_field, uint8_t field_length){
+    int i;
+    uint32_t output = 0;
+    for(i = 0; i < field_length; i++){
+        output += (uint32_t)frame_field[i] << (i * 8);
+    }
+    return output;
+}
+
+void _PollMessage_write_array(uint8_t *frame_field, uint8_t field_length, uint32_t in_field){
+    uint32_t num_to_write = in_field;
+    int i;
+    for(i = 0; i < field_length; i++){
+        frame_field[i] = (uint8_t)num_to_write;
+        num_to_write = num_to_write >> 8;
+    }
+}
+
+
+
+
+#define RESPONSE_MESSAGE_FRAME_CONTROL_INDEX 0
+#define RESPONSE_MESSAGE_FRAME_CONTROL_LENGTH 2
+
+#define RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX 2
+#define RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH 1
+
+#define RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX 3
+#define RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH 2
+
+#define RESPONSE_MESSAGE_DESTINATION_ADDRESS_INDEX 5
+#define RESPONSE_MESSAGE_DESTINATION_ADDRESS_LENGTH 2
+
+#define RESPONSE_MESSAGE_SOURCE_ADDRESS_INDEX 7
+#define RESPONSE_MESSAGE_SOURCE_ADDRESS_LENGTH 2
+
+#define RESPONSE_MESSAGE_FUNCTION_CODE_INDEX 9
+#define RESPONSE_MESSAGE_FUNCTION_CODE_LENGTH 1
+
+#define RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_INDEX 10
+#define RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_LENGTH 4
+
+#define RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_INDEX 14
+#define RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_LENGTH 4
+//                                          0     1     2  3     4      5    6    7    8   9    10 11 12 13 14 15 16 17 18 19
+static uint8_t _response_message_array[] = {0x41, 0x88, 0, 0xCA, 0xDE, 'V', 'E', 'W', 'A', 0xE1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+uint16_t ResponseMessage_get_frame_control(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_FRAME_CONTROL_INDEX], RESPONSE_MESSAGE_FRAME_CONTROL_LENGTH);
+}
+
+uint8_t ResponseMessage_get_frame_sequence_number(){
+    return (uint8_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH);
+}
+
+void ResponseMessage_set_frame_sequence_number(uint8_t in_seq_num){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_INDEX], RESPONSE_MESSAGE_FRAME_SEQUENCE_NUMBER_LENGTH, in_seq_num);
+}
+
+void ResponseMessage_increment_frame_sequence_number(){
+    uint8_t frame_seq_num = ResponseMessage_get_frame_sequence_number();
+    frame_seq_num = (frame_seq_num + 1) % 255;
+    ResponseMessage_set_frame_sequence_number(frame_seq_num);
+}
+
+uint16_t ResponseMessage_get_personal_area_network_id(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_INDEX], RESPONSE_MESSAGE_PERSONAL_AREA_NETWORK_ID_LENGTH);
+}
+
+uint16_t ResponseMessage_get_destination_address(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_DESTINATION_ADDRESS_INDEX], RESPONSE_MESSAGE_DESTINATION_ADDRESS_LENGTH);
+}
+
+void ResponseMessage_set_destination_address(uint16_t in_dest_addr){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_DESTINATION_ADDRESS_INDEX], RESPONSE_MESSAGE_DESTINATION_ADDRESS_LENGTH, in_dest_addr);
+}
+
+uint16_t ResponseMessage_get_source_address(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_SOURCE_ADDRESS_INDEX], RESPONSE_MESSAGE_SOURCE_ADDRESS_LENGTH);
+}
+
+void ResponseMessage_set_source_address(uint16_t in_src_addr){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_SOURCE_ADDRESS_INDEX], RESPONSE_MESSAGE_SOURCE_ADDRESS_LENGTH, in_src_addr);
+}
+
+uint8_t ResponseMessage_get_function_code(){
+    return (uint16_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_FUNCTION_CODE_INDEX], RESPONSE_MESSAGE_FUNCTION_CODE_LENGTH);
+}
+
+uint32_t ResponseMessage_get_poll_message_receive_timestamp(){
+    return (uint32_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_INDEX], RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_LENGTH);
+}
+
+void ResponseMessage_set_poll_message_receive_timestamp(uint32_t poll_msg_receive_ts){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_INDEX], RESPONSE_MESSAGE_POLL_MESSAGE_RECEIVE_TIMESTAMP_LENGTH, poll_msg_receive_ts);
+}
+
+uint32_t ResponseMessage_get_response_message_transmit_timestamp(){
+    return (uint32_t)_ResponseMessage_read_array(&_response_message_array[RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_INDEX], RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_LENGTH);
+}
+
+void ResponseMessage_set_response_message_transmit_timestamp(uint32_t resp_transmit_ts){
+    _ResponseMessage_write_array(&_response_message_array[RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_INDEX], RESPONSE_MESSAGE_RESPONSE_MESSAGE_TRANSMIT_TIMESTAMP_LENGTH, resp_transmit_ts);
+}
+
+uint16_t ResponseMessage_get_array_sizeof(){
+    return sizeof(_response_message_array);
+}
+
+uint8_t* ResponseMessage_get_array(){
+    return _response_message_array;
+}
+
+void ResponseMessage_print(){
+    Serial.print("ResponseMessage: \n");
+    Serial.print("    frame_control: 0x"); Serial.println(ResponseMessage_get_frame_control(), HEX);
+    Serial.print("    frame_sequence_number: "); Serial.println(ResponseMessage_get_frame_sequence_number());
+    Serial.print("    personal_area_network_id: 0x"); Serial.println(ResponseMessage_get_personal_area_network_id(), HEX);
+    Serial.print("    destination_address: "); Serial.println(ResponseMessage_get_destination_address());
+    Serial.print("    source_address: "); Serial.println(ResponseMessage_get_source_address());
+    Serial.print("    function_code: "); Serial.println(ResponseMessage_get_function_code());
+    Serial.print("    poll_message_receive_timestamp: "); Serial.println(ResponseMessage_get_poll_message_receive_timestamp());
+    Serial.print("    response_message_transmit_timestamp: "); Serial.println(ResponseMessage_get_response_message_transmit_timestamp());
+}
+
+uint32_t _ResponseMessage_read_array(uint8_t *frame_field, uint8_t field_length){
+    int i;
+    uint32_t output = 0;
+    for(i = 0; i < field_length; i++){
+        output += (uint32_t)frame_field[i] << (i * 8);
+    }
+    return output;
+}
+
+void _ResponseMessage_write_array(uint8_t *frame_field, uint8_t field_length, uint32_t in_field){
+    uint32_t num_to_write = in_field;
+    int i;
+    for(i = 0; i < field_length; i++){
+        frame_field[i] = (uint8_t)num_to_write;
+        num_to_write = num_to_write >> 8;
+    }
+}
+
+
+
+
+/* Default communication configuration. We use default non-STS DW mode.
+ *  Too scared to change, so keeping it
+ */
+static dwt_config_t config = {
+    5,                /* Channel number. */
+    DWT_PLEN_128,     /* Preamble length. Used in TX only. */
+    DWT_PAC8,         /* Preamble acquisition chunk size. Used in RX only. */
+    9,                /* TX preamble code. Used in TX only. */
+    9,                /* RX preamble code. Used in RX only. */
+    1,                /* 0 to use standard 8 symbol SFD, 1 to use non-standard 8 symbol, 2 for non-standard 16 symbol SFD and 3 for 4z 8 symbol SDF type */
+    DWT_BR_6M8,       /* Data rate. */
+    DWT_PHRMODE_STD,  /* PHY header mode. */
+    DWT_PHRRATE_STD,  /* PHY header rate. */
+    (129 + 8 - 8),    /* SFD timeout (preamble length + 1 + SFD length - PAC size). Used in RX only. */
+    DWT_STS_MODE_OFF, /* STS disabled */
+    DWT_STS_LEN_64,   /* STS length see allowed values in Enum dwt_sts_lengths_e */
+    DWT_PDOA_M0       /* PDOA mode off */
+};
+// DTU - Device time unit
+// ONE DEVICE TIME UNIT = (1.0/499.2e6/128.0) //!< = 15.65e-12 seconds
+#define TRANSMIT_ANTENNA_DELAY_IN_DTU 16385
+#define RECEIVE_ANTENNA_DELAY_IN_DTU 16385
+
+#define POLL_RECEIVE_TO_RESPONSE_TRANSMIT_DELAY_IN_ULTRAWIDEBAND_MICROSECOND 450
 
 /* Hold copy of status register state here for reference so that it can be examined at a debug breakpoint. */
 static uint32_t status_reg = 0;
 
-/* Delay between frames, in UWB microseconds. See NOTE 1 below. */
-#ifdef RPI_BUILD
-#define POLL_RX_TO_RESP_TX_DLY_UUS 550
-#endif // RPI_BUILD
-#ifdef STM32F429xx
-#define POLL_RX_TO_RESP_TX_DLY_UUS 450
-#endif // STM32F429xx
-#ifdef NRF52840_XXAA
-#define POLL_RX_TO_RESP_TX_DLY_UUS 650
-#endif // NRF52840_XXAA
-
-#define POLL_RX_TO_RESP_TX_DLY_UUS 450
-
-/* Timestamps of frames transmission/reception. */
-static uint64_t poll_rx_ts; // poll receive timestamp in device time unit
-static uint64_t resp_tx_ts; // response receive timestammp in device time unit
-
 /* Values for the PG_DELAY and TX_POWER registers reflect the bandwidth and power of the spectrum at the current
  * temperature. These values can be calibrated prior to taking reference measurements. See NOTE 5 below.
- * txconfig_options: transmit configuration options
- */
+ * txconfig_options: transmit configuration options*/
 extern dwt_txconfig_t txconfig_options;
 
-void setup()
-{
-  UART_init();
-  test_run_info((unsigned char *)APP_NAME);
+void DW3000Chip_initialize_for_responder(){
+    UART_init();
 
-  /* Configure SPI rate, DW3000 supports up to 38 MHz */
-  /* Reset DW IC */
-  spiBegin(PIN_IRQ, PIN_RST);
-  spiSelect(PIN_SS);
+    /* Configure SPI rate, DW3000 supports up to 38 MHz */
+    /* Reset DW IC */
+    spiBegin(PIN_INTERRUPT_REQUEST, PIN_RESET);
+    spiSelect(PIN_SLAVE_SELECT);
+    
+    delay(2); /// Time needed for DW3000 to start up (transition from INIT_RC to IDLE_RC, or could wait for SPIRDY event)
 
-  delay(2); // Time needed for DW3000 to start up (transition from INIT_RC to IDLE_RC, or could wait for SPIRDY event)
+    while(!dwt_checkidlerc()){
+        UART_puts("IDLE FAILED \r\n"); // Need to make sure DW IC is in IDLE_RC before proceeding
+        while(1);
+    }
+    
+    if (dwt_initialise(DWT_DW_INIT) == DWT_ERROR){
+        UART_puts("INIT FAILED \r\n");
+        while(1);
+    }
 
-  /*IDLE_RC: One of the possible state that DW3000 Integrated circuit could be in*/
-  while (!dwt_checkidlerc()) // Need to make sure DW IC is in IDLE_RC before proceeding
-  {
-    UART_puts("IDLE FAILED\r\n");
-    while (1)
-      ;
-  }
+    // Enabling LEDs here for debug so that for each TX the D1 LED will flash on DW3000 red eval-shield boards.
+    dwt_setleds(DWT_LEDS_ENABLE | DWT_LEDS_INIT_BLINK);
 
-  if (dwt_initialise(DWT_DW_INIT) == DWT_ERROR)
-  {
-    UART_puts("INIT FAILED\r\n");
-    while (1)
-      ;
-  }
+    /* Configure DW IC. See NOTE 6 below. */
+    if (dwt_configure(&config)){ // if the dwt_configure returns DWT_ERROR either the PLL or RX calibration has failed the host should reset the device 
+        UART_puts("CONFIG FAILED\r\n");
+        while (1);
+    }
 
-  // Enabling LEDs here for debug so that for each TX the D1 LED will flash on DW3000 red eval-shield boards.
-  dwt_setleds(DWT_LEDS_ENABLE | DWT_LEDS_INIT_BLINK);
+    /* Configure the TX spectrum parameters (power, PG delay and PG count)
+    *  PG delay: delay time when a singal is transmitted and time when power amplifier (PA) is turned on
+    *  the purpose of PG delay to give enough time for PA enough time to stabilize
+    *  PG count: number of delay cycles that are used to stabilize the power amplifier*/
+    dwt_configuretxrf(&txconfig_options);
 
-  /* Configure DW IC. See NOTE 6 below. */
-  if (dwt_configure(&config)) // if the dwt_configure returns DWT_ERROR either the PLL or RX calibration has failed the host should reset the device
-  {
-    UART_puts("CONFIG FAILED\r\n");
-    while (1)
-      ;
-  }
+    /* Apply default antenna delay value. See NOTE 2 below.
+    *  is used for calibration purposes for calculating distance from one DW3000 board to another*/
+    dwt_setrxantennadelay(RECEIVE_ANTENNA_DELAY_IN_DTU);
+    dwt_settxantennadelay(RECEIVE_ANTENNA_DELAY_IN_DTU);
 
-  /* Configure the TX spectrum parameters (power, PG delay and PG count)
-   *  PG delay: delay time when a singal is transmitted and time when power amplifier (PA) is turned on
-   *  the purpose of PG delay to give enough time for PA enough time to stabilize
-   *  PG count: number of delay cycles that are used to stabilize the power amplifier
-   */
-  dwt_configuretxrf(&txconfig_options);
+    /* Next can enable TX/RX states output on GPIOs 5 and 6 to help debug, and also TX/RX LEDs
+    * Note, in real low power applications the LEDs should not be used.
+    * LNA: Low noise amplifier, which amplify weak signals received by antenna
+    * PA: power amplifier, which amplify signal to higher power level so it can be transmitted by antenna*/
+    dwt_setlnapamode(DWT_LNA_ENABLE | DWT_PA_ENABLE);
 
-  /* Apply default antenna delay value. See NOTE 2 below.
-   *  is used for calibration purposes for calculating distance from one DW3000 board to another
-   */
-  dwt_setrxantennadelay(RX_ANT_DLY);
-  dwt_settxantennadelay(TX_ANT_DLY);
-
-  /* Next can enable TX/RX states output on GPIOs 5 and 6 to help debug, and also TX/RX LEDs
-   * Note, in real low power applications the LEDs should not be used.
-   * LNA: Low noise amplifier, which amplify weak signals received by antenna
-   * PA: power amplifier, which amplify signal to higher power level so it can be transmitted by antenna
-   */
-  dwt_setlnapamode(DWT_LNA_ENABLE | DWT_PA_ENABLE);
 }
 
-void loop()
-{
-  /* Activate reception immediately. */
-  dwt_rxenable(DWT_START_RX_IMMEDIATE);
 
-  /* Poll for reception of a frame or error/timeout. See NOTE 6 below.
-   *  `dwt_read32bitreg(SYS_STATUS_ID)`: get the value of status register
-   *  `SYS_STATUS_RXFCG_BIT_MASK`: bit mask for receive frame control good, check if frame is good
-   *  `SYS_STATUS_ALL_RX_ERR`: bit mask for any receive error, check if CRC is wrong, incomplete frame message, etc for any error.
-   */
-  while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR)))
-  {
-  };
 
-  if (status_reg & SYS_STATUS_RXFCG_BIT_MASK) // check if frame is received and can be used
-  {
-    uint32_t frame_len;
+
+uint16_t _RESPONDER_ID = 1000;
+
+void wait_for_poll_message_and_transmit_back_response_message(){
+    
+    /* Activate reception immediately. */
+    dwt_rxenable(DWT_START_RX_IMMEDIATE);
+
+    /* Poll for reception of a frame or error/timeout. See NOTE 6 below.
+    *  `dwt_read32bitreg(SYS_STATUS_ID)`: get the value of status register
+    *  `SYS_STATUS_RXFCG_BIT_MASK`: bit mask for receive frame control good, check if frame is good
+    *  `SYS_STATUS_ALL_RX_ERR`: bit mask for any receive error, check if CRC is wrong, incomplete frame message, etc for any error.*/
+    while (!((status_reg = dwt_read32bitreg(SYS_STATUS_ID)) & (SYS_STATUS_RXFCG_BIT_MASK | SYS_STATUS_ALL_RX_ERR))){};
+
+    if (!(status_reg & SYS_STATUS_RXFCG_BIT_MASK)){ // if not receive frame control good
+        /* Clear RX error events in the DW IC status register. clear receive frame error from status register */
+        dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
+        return;
+    }
 
     /* Clear good RX frame event in the DW IC status register.
-     *  Clear good receive frame event in the DW3000 integrated circuit status register
-     */
+    *  Clear good receive frame event in the DW3000 integrated circuit status register*/
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_RXFCG_BIT_MASK);
 
-    /* A frame has been received, read it into the local buffer.
-     *  Read the receive frame infromation regsiter which contain info like frame length and CRC status
-     *  RXFLEN_MASK: receive frame length bitmask, used to extract frame length from receive frame information register
-     */
-    frame_len = dwt_read32bitreg(RX_FINFO_ID) & RXFLEN_MASK;
-    if (frame_len <= sizeof(rx_buffer))
-    {
-      dwt_readrxdata(rx_buffer, frame_len, 0);
-
-      /* Check that the frame is a poll sent by "SS TWR initiator" example.
-       * As the sequence number field of the frame is not relevant, it is cleared to simplify the validation of the frame. */
-      rx_buffer[ALL_MSG_SN_IDX] = 0;
-      if (memcmp(rx_buffer, rx_poll_msg, ALL_MSG_COMMON_LEN) == 0) // if receive_buffer and receive_response_message is same for length `ALL_MSG_COMMON_LENGTH`
-      {
-        uint32_t resp_tx_time;
-        int ret;
-
-        /* Retrieve poll reception timestamp.
-         *  `get_rx_timestamp_u64()` get the receive timestamp in u64 data type BUT it's only 40 bits long
-         *  uint64_t get_rx_timestamp_u64(void)
-          {
-              uint8_t ts_tab[5];
-              uint64_t ts = 0;
-              int8_t i;
-              dwt_readrxtimestamp(ts_tab);
-              for (i = 4; i >= 0; i--)
-              {
-                  ts <<= 8;
-                  ts |= ts_tab[i];
-              }
-              return ts;
-          }
-        */
-        poll_rx_ts = get_rx_timestamp_u64();
-
-        /* Compute response message transmission time. See NOTE 7 below.
-         *  POLL_RX_TO_RESP_TX_DLY_UUS: delay between frame of poll receive to response transmit in UWB microseconds
-         *  UUS_TO_DWT_TIME: A constant conversion factor to convert UWB microseconds into DW3000 time?
-         *
-         *  Delayed transmission time refers to ability of a wireless communication device to schedule a
-         *  transmission at a specific time.
-         *  2 ** 8 = 256
-         *  2 ** 9 = 512
-         *
-         *  "As we want to send final TX timestamp in final message, we have to compute it in advance
-         *  instead of relying on reading of DW IC register..." (because if you are reading from DW IC register
-         *  for transmission time it won't be accurate so you need to compute ahead of time)
-         *  "Timestamps and delayed transmission time are both expressed(represented) in device time units, so we just
-         *  have to add the desired response delay to response RX timestamp"
-         *
-         *  `UUS`: Ultra wideband microsecond
-         *  `DWT`: Device time unit
-         *  Delayed tranmission time resolution
-         *
-         *  From `dw3000_device_api.cpp`
-         *  void dwt_setdelayedtrxtime(uint32_t starttime)
-            {
-                dwt_write32bitoffsetreg(DX_TIME_ID, 0, starttime); // Note: bit 0 of this register is ignored
-            } // end dwt_setdelayedtrxtime()
-
-
-         *  From `dw_shared_functions_defines.h`
-         *  UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
-         *  1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu.
-         *  #define UUS_TO_DWT_TIME 63898
-         *
-         *  poll_rx_ts: poll receive timestamp in 40 bit with u64 type in device time unit
-         *  POLL_RX_TO_RESP_TX_DLY_UUS: delay between frame of poll receive to response transmit in UWB microseconds
-         *  UUS_TO_DWT_TIME: constant to convert Ultrawide band microsecond to device time unit
-         *  resp_tx_time = response transmit time in 512 device time units represented with 32 unsigned bit
-         *  dwt_setdelayedtrxtime(uint32_t startime): decawave transceiver toolset set dealyed transmission time
-         *
-         *  poll receive to response transmit delay in ultrawideband microsecond:
-         *  POLL_RX_TO_RESP_TX_DLY_UUS;
-         *
-         *  poll receive to response transmit delay in device time unit:
-         *  POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME;
-         *
-         *  response transmit [date]time (in which the response message will be transmitted)
-         *  represented with 40 bit with type u64 in resoultion of 1 device time unit:
-         *  poll_rx_ts + (POLL_RX_TORESP_TX_DLY_UUS * UUS_TO_DWT_TIME);
-         *
-         *  response transmit [date]time (in which the reponse message will be transmitted)
-         *  represented with 32 bit with type uint64_t in resolution of 256 device time unit:
-         *  ( poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME) ) >> 8;
-         *
-         *  assign response transmit [date]time represented with 32 bit with uint64_t in resolution of
-         *  256 device time unit to variable `resp_tx_time` with type uint32_t:
-         *  resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
-         *
-         *  set the response transmit [date]time which have a resolution of 512 device time units,
-         *  which are given resp_tx_time which has resolution of 256 device time unit with ignoring the
-         *  0th bit which makes it 512 device time units
-         *  dwt_setdelayedtrxtime(resp_tx_time);
-        */
-        resp_tx_time = (poll_rx_ts + (POLL_RX_TO_RESP_TX_DLY_UUS * UUS_TO_DWT_TIME)) >> 8;
-        dwt_setdelayedtrxtime(resp_tx_time);
-
-        /* Response TX timestamp is the transmission time we programmed plus the antenna delay.
-         *  0xFFFFFFFEUL  , the `UL` part is supposed to mean unsigned long (32 bit unsigned integer)
-         *  From `dw_shared_functions_defines.h`
-         *  UWB microsecond (uus) to device time unit (dtu, around 15.65 ps) conversion factor.
-         *  1 uus = 512 / 499.2 µs and 1 µs = 499.2 * 128 dtu.
-         *
-         *  (2 ** 32) * (15.65 * (10 ** -12)) = 0.067216
-         *  2 ** 9 = 512
-         *
-         *  resp_tx_ts: response transmit timestamp represented with 40 bits in u64 type in device time unit
-         *  #define DWT_TIME_UNITS      (1.0/499.2e6/128.0) //!< = 15.65e-12 s
-         *
-         *  `resp_tx_time`: reponse transmit time represented in 32 bit with uint32_t with unit as (512 device time unit)
-         *
-         *  response transmit time in 32 bit with uint32_t with unit as (256 device time unit):
-         *  resp_tx_time & 0xFFFFFFFEUL;
-         *
-         *  response transmit time in 32 bit with uint64_t with unit as (256 device time unit):
-         *  (uint64_t)(resp_tx_time & 0xFFFFFFFEUL);
-         *
-         *  response transmit time in 40 bit with uint64_t with unit as (1 device time unit):
-         *  ((uint64_t)(resp_tx_time & 0xFFFFFFFEUL) << 8);
-         *
-         *  response trnasmit time in 40 bit with uint64_t in (1 device time unit) with transmit antenna delay:
-         *  (((uint64_t)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
-         *
-         */
-        resp_tx_ts = (((uint64_t)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
-
-        /* Write all timestamps in the final message. See NOTE 8 below.
-         *
-         * set the poll receive timestamp part of response message with the first 32 bit
-         * of the 40 bit poll_rx_ts in uint64_t with unit as (1 device time unit)
-         * response_message.set_poll_receive_timestamp(poll_rx_ts[0:32+1])
-         * resp_msg_set_ts(&tx_resp_msg[RESP_MSG_POLL_RX_TS_IDX], poll_rx_ts);
-         *
-         * set the response transmit timestamp part of response message with the first 32 bit
-         * of the 40 bit resp_tx_ts in uint64_t with unit as (1 device time unit)
-         * response_message.set_response_transmit_timestamp(resp_tx_ts[0:32+1])
-         * resp_msg_set_ts(&tx_resp_msg[RESP_MSG_RESP_TX_TS_IDX], poll_rx_ts);
-         *
-         *
-         */
-        resp_msg_set_ts(&tx_resp_msg[RESP_MSG_POLL_RX_TS_IDX], poll_rx_ts);
-        resp_msg_set_ts(&tx_resp_msg[RESP_MSG_RESP_TX_TS_IDX], resp_tx_ts);
-
-        /* Write and send the response message. See NOTE 9 below. */
-        tx_resp_msg[ALL_MSG_SN_IDX] = frame_seq_nb;
-        // dwt_writetxdata = write transmit data
-        dwt_writetxdata(sizeof(tx_resp_msg), tx_resp_msg, 0); /* Zero offset in TX buffer. */
-        // dwt_writetxfctrl = write to transmit frame control register
-        dwt_writetxfctrl(sizeof(tx_resp_msg), 0, 1); /* Zero offset in TX buffer, ranging. */
-
-        /*
-         ------------------------------------------------------------------------------------------------------------------
-           * @brief This call initiates the transmission, input parameter indicates which TX mode is used see below
-           *
-           * input parameters:
-           * @param mode - if mode = DWT_START_TX_IMMEDIATE - immediate TX (no response expected)
-           *               if mode = DWT_START_TX_DELAYED - delayed TX (no response expected)  at specified time (time in DX_TIME register)
-           *               if mode = DWT_START_TX_DLY_REF - delayed TX (no response expected)  at specified time (time in DREF_TIME register + any time in DX_TIME register)
-           *               if mode = DWT_START_TX_DLY_RS  - delayed TX (no response expected)  at specified time (time in RX_TIME_0 register + any time in DX_TIME register)
-           *               if mode = DWT_START_TX_DLY_TS  - delayed TX (no response expected)  at specified time (time in TX_TIME_LO register + any time in DX_TIME register)
-           *               if mode = DWT_START_TX_IMMEDIATE | DWT_RESPONSE_EXPECTED - immediate TX (response expected - so the receiver will be automatically turned on after TX is done)
-           *               if mode = DWT_START_TX_DELAYED | DWT_RESPONSE_EXPECTED - delayed TX (response expected - so the receiver will be automatically turned on after TX is done)
-           *               if mode = DWT_START_TX_CCA - Send the frame if no preamble detected within PTO time
-           *               if mode = DWT_START_TX_CCA  | DWT_RESPONSE_EXPECTED - Send the frame if no preamble detected within PTO time and then enable RX
-           * output parameters
-           *
-           * returns DWT_SUCCESS for success, or DWT_ERROR for error (e.g. a delayed transmission will be cancelled if the delayed time has passed)
-          int dwt_starttx(uint8_t mode);
-        */
-        ret = dwt_starttx(DWT_START_TX_DELAYED);
-
-        /* If dwt_starttx() returns an error, abandon this ranging exchange and proceed to the next one. See NOTE 10 below. */
-        if (ret == DWT_SUCCESS)
-        {
-          /* Poll DW IC until TX frame sent event set. See NOTE 6 below. */
-          while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK))
-          {
-          };
-
-          /* Clear TXFRS event. transmit frame sent event from status register */
-          dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
-
-          /* Increment frame sequence number after transmission of the poll message (modulo 256). */
-          frame_seq_nb++;
-        }
-      }
+    bool is_write_rx_buffer_to_poll_message_success = _write_rx_buffer_to_poll_message();
+    if (!is_write_rx_buffer_to_poll_message_success){
+        return;
     }
-  }
-  else
-  {
-    /* Clear RX error events in the DW IC status register. clear receive frame error from status register */
-    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
-  }
+
+    _update_response_message_from_poll_message_and_timestamp();
+    
+    int dwt_status = _transmit_response_message();
+    if (dwt_status != DWT_SUCCESS){
+        return;
+    }
+
+    /* Poll DW IC until TX frame sent event set. See NOTE 6 below. */
+    while (!(dwt_read32bitreg(SYS_STATUS_ID) & SYS_STATUS_TXFRS_BIT_MASK)){};
+    
+    // Clear TXFRS event. transmit frame sent event
+    dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
+
+    ResponseMessage_increment_frame_sequence_number();
+    
+}
+
+bool _write_rx_buffer_to_poll_message(){
+    bool is_operation_success = true;
+
+    // Read the receive frame infromation regsiter which contain info like frame length and CRC status
+    // in this case frame length
+    uint32_t frame_len = dwt_read32bitreg(RX_FINFO_ID) & RXFLEN_MASK;
+    
+    if(frame_len > PollMessage_get_array_sizeof()){
+        is_operation_success = false;
+        return is_operation_success;
+    }
+
+    /*Zero is the offset buffer*/
+    dwt_readrxdata(PollMessage_get_array(), frame_len, 0);
+
+    return is_operation_success;
+}
+
+void _update_response_message_from_poll_message_and_timestamp(){
+    uint32_t response_transmit_time;
+    uint64_t poll_receive_timestamp;
+    uint64_t response_transmit_timestamp;
+    int transmit_returned;
+
+    // get 40 bit timestamp in type unsigned64int in device time unit
+    poll_receive_timestamp = get_rx_timestamp_u64();
+
+    // dwt_setdelayedtrxtime(tx_time): takes the higher 32 bit of timestamp(whic is 40 bit)
+    // which is in 256 device time unit, the function then ignore the least significant bit
+    // of `tx_time` which effectively make the resolution of 512 device time unit, in delayed transmit time 
+    // NOTE: this part and onward is f***ed up
+    response_transmit_time = (poll_receive_timestamp + (POLL_RECEIVE_TO_RESPONSE_TRANSMIT_DELAY_IN_ULTRAWIDEBAND_MICROSECOND * UUS_TO_DWT_TIME)) >> 8;
+    dwt_setdelayedtrxtime(response_transmit_time);
+    
+    // response_transmit_timestamp in 40 bit, with type u64 in device time unit
+    // `(((uint64_t)(response_transmit_time & 0xFFFFFFFEUL)) << 8)` 
+    // ^^^^ Converts the `response_transmit_time` 32 bit, u32, 512 device time unit into `40 bit, u64, 1 device time unit`
+    //                                                                    01234567
+    response_transmit_timestamp = (((uint64_t)(response_transmit_time & 0xFFFFFFFEUL)) << 8) + TRANSMIT_ANTENNA_DELAY_IN_DTU;
+
+    ResponseMessage_set_poll_message_receive_timestamp(poll_receive_timestamp);
+    ResponseMessage_set_response_message_transmit_timestamp(response_transmit_timestamp);
+
+}
+
+int _transmit_response_message(){
+    int dwt_status;
+
+    // Write transmit data
+    // Zero offset in TX buffer
+    dwt_writetxdata(ResponseMessage_get_array_sizeof(), ResponseMessage_get_array(), 0);
+    
+    // Write to transmit frame control
+    // Zero offset in TX buffer, ranging
+    dwt_writetxfctrl(ResponseMessage_get_array_sizeof(), 0, 1);
+
+    dwt_status = dwt_starttx(DWT_START_TX_DELAYED);
+    return dwt_status;
+}
+
+
+
+
+void setup(){
+    DW3000Chip_initialize_for_responder();
+
+}
+
+void loop(){
+    Serial.println("start main loop of responder with struct");
+    Serial.println("waiting for poll message");
+
+    wait_for_poll_message_and_transmit_back_response_message();
+    ResponseMessage_print();
+
+    Serial.println("sent back the response message");
+    Serial.println("end main loop of responder with strcut");
+    
+    
 }
 
 /*****************************************************************************************************************************************************

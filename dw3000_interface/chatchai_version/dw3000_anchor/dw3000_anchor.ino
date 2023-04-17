@@ -317,8 +317,8 @@ void loop()
          *
          *  response trnasmit time in 40 bit with uint64_t in (1 device time unit) with transmit antenna delay:
          *  (((uint64_t)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
-         *
          */
+        //                                         01234567
         resp_tx_ts = (((uint64_t)(resp_tx_time & 0xFFFFFFFEUL)) << 8) + TX_ANT_DLY;
 
         /* Write all timestamps in the final message. See NOTE 8 below.
