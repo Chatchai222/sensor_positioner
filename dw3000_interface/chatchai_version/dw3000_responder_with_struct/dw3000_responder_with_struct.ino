@@ -8,6 +8,12 @@
 
 #define APP_NAME "SS TWR RESP with struct v1.0"
 
+// THIS IS FOR ANCHOR
+/******** START EASY CONFIGURE **********/
+const uint16_t RESPONDER_ID = 1002;
+
+/******** END EASY CONFIGURE ************/
+
 // connection pins
 const uint8_t PIN_RESET = 27; // reset pin
 const uint8_t PIN_INTERRUPT_REQUEST = 34; // irq pin
@@ -346,7 +352,7 @@ void DW3000Chip_initialize_for_responder(){
 
 
 
-uint16_t _RESPONDER_ID = 1001;
+uint16_t _RESPONDER_ID = RESPONDER_ID;
 
 void wait_for_poll_message_and_transmit_back_response_message(){
     

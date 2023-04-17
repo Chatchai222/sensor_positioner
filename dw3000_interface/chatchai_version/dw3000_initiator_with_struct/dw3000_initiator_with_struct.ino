@@ -8,6 +8,15 @@
 
 #define APP_NAME "SS TWR Init refactored with struct v1.0"
 
+// THIS IS FOR TAG
+/******* START EASY CONFIGURE  ********/
+const uint16_t INITIATOR_ID = 2000;
+
+
+
+/******* END EASY CONFIGURE ***********/
+
+
 // connections pins
 const uint8_t PIN_RESET = 27;
 const uint8_t PIN_INTERRUPT_REQUEST = 34;
@@ -658,7 +667,7 @@ void loop() {
     Serial.println("Start of loop initiator with struct");
 
     struct Initiator initiator;
-    initiator_initialize(&initiator, 2000);
+    initiator_initialize(&initiator, INITIATOR_ID);
     
     struct Responder* responder_ptr;
     responder_ptr = RoundRobinResponder_get_responder_ptr();
