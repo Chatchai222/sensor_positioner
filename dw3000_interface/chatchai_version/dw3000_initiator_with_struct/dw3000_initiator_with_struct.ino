@@ -5,6 +5,8 @@
  */
 
 #include "dw3000.h"
+#include <WiFi.h>
+#include <WiFiUdp.h>
 
 #define APP_NAME "SS TWR Init refactored with struct v1.0"
 
@@ -21,6 +23,67 @@ const uint16_t INITIATOR_ID = 2000;
 const uint8_t PIN_RESET = 27;
 const uint8_t PIN_INTERRUPT_REQUEST = 34;
 const uint8_t PIN_SLAVE_SELECT = 4;
+
+
+
+// wifi
+const char* NETWORK_NAME = "ASUS_for_ICT";
+const char* NETWORK_PASSWORD = "ictadmin";
+
+const char* UDP_ADDRESS = "192.168.4.154";
+const int UDP_PORT = 5005;
+
+bool connected = false;
+
+WiFiUDP udp;
+
+void connect_to_wifi(const char* ssid, const char* pwd){
+    Serial.println("Connecting to WiFi network: " + String(ssid));
+
+    // delete old config
+    WiFi.disconnect(true);
+    // register event handler
+    WiFi.onEvent(WiFiEvent);
+
+    // Initiate connection
+    WiFi.begin(ssid, pwd);
+    
+    Serial.println("Waiting for WIFI connection...");
+}
+
+void WiFiEvent(WiFiEvent_t event){
+    switch(event){
+        case SYSTEM_EVENT_STA_GOT_IP:
+            // Whenn connected set
+            Serial.print("Wifi connected! IP address: ");
+            Serial.println(WiFi.localIP());
+            //initializes the UDP state
+            // This initializes the transfer buffer
+            udp.begin(WiFi.localIP(), UDP_PORT);
+            connected = true;
+            break;
+        case SYSTEM_EVENT_STA_DISCONNECTED:
+            Serial.println("WiFi lost connection");
+            connected = false;
+            break;
+        default: break;
+    }
+}
+
+void publish_to_UDP(struct Initiator* initiator_ptr, struct Responder* responder_ptr, double distance){
+    if(connected){
+        uint16_t initiator_id = initiator_get_id(initiator_ptr);
+        uint16_t responder_id = responder_get_id(responder_ptr);
+        
+        udp.beginPacket(UDP_ADDRESS, UDP_PORT);
+        udp.printf("{ \"source\": %u, \"destination\": %u, \"range\": %lf }", initiator_id, responder_id, distance);
+        udp.endPacket();
+        Serial.println("Sent UDP packet");
+    } else {
+        Serial.println("Failed to send UDP packet");
+    }
+}
+
 
 
 
@@ -657,9 +720,11 @@ void my_debug() {
 }
 
 void setup() {
-    DW3000Chip_initialize_for_initiator();
-
     // put your setup code here, to run once:
+    DW3000Chip_initialize_for_initiator();
+    connect_to_wifi(NETWORK_NAME, NETWORK_PASSWORD);
+    
+    
 }
 
 void loop() {
@@ -678,10 +743,12 @@ void loop() {
         Serial.println("ranger failed to get distance");
     } else {
         Serial.print("distance is: "); Serial.println(distance);
+        publish_to_UDP(&initiator, responder_ptr, distance);
     }
     initiator_print(&initiator);
     responder_print(responder_ptr);
-
+    
+    Serial.println(String("wtf there is a string?"));
     Serial.println("End of loop initiator with struct");
     Sleep(200);
 
