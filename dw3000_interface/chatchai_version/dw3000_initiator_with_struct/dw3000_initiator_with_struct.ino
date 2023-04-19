@@ -76,7 +76,7 @@ void publish_to_UDP(struct Initiator* initiator_ptr, struct Responder* responder
         uint16_t responder_id = responder_get_id(responder_ptr);
         
         udp.beginPacket(UDP_ADDRESS, UDP_PORT);
-        udp.printf("{ \"source\": %u, \"destination\": %u, \"range\": %lf }", initiator_id, responder_id, distance);
+        udp.printf("{ \"source\": \"%u\", \"destination\": \"%u\", \"range\": \"%lf\" }", initiator_id, responder_id, distance);
         udp.endPacket();
         Serial.println("Sent UDP packet");
     } else {
