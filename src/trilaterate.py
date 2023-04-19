@@ -1,7 +1,11 @@
-from abc import ABC, abstractmethod
+import abc
 import math
 
 class Position:
+    
+    _ROUND_TO_NEAREST_DECIMAL_DIGIT = 6
+
+
     def __init__(self, x: float, y: float, z: float):
         self._x = x
         self._y = y
@@ -63,15 +67,15 @@ class Position:
 
 
     def get_x(self) -> float:
-        return self._x
+        return round(self._x, self._ROUND_TO_NEAREST_DECIMAL_DIGIT)
     
 
     def get_y(self) -> float:
-        return self._y
+        return round(self._y, self._ROUND_TO_NEAREST_DECIMAL_DIGIT)
     
 
     def get_z(self) -> float:
-        return self._z
+        return round(self._z, self._ROUND_TO_NEAREST_DECIMAL_DIGIT)
     
 
     def __str__(self):
@@ -125,10 +129,10 @@ class NullPosition(Position):
         raise NotImplementedError
 
 
-class PositionCalculator(ABC):
+class PositionCalculator(abc.ABC):
 
 
-    @abstractmethod
+    @abc.abstractmethod
     def get_position_or_null_position(self, many_tag_dist_to_anchor) -> Position:
         raise NotImplementedError
     

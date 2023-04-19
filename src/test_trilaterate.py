@@ -1,5 +1,5 @@
 import unittest
-from trilaterate import *
+import trilaterate
 import math
 
 class TestPosition(unittest.TestCase):
@@ -7,17 +7,17 @@ class TestPosition(unittest.TestCase):
 
     def test_givenTwoPositionWithSmallDistance_thenPositionIsAlmostEqual(self):
         # This test is for floating point error 
-        pos1 = Position(10, 20, 30)
-        pos2 = Position(10.00001, 19.9999, 30.0003)
-        pos3 = Position(9.99999, 20.00001, 29.99999)
+        pos1 = trilaterate.Position(10, 20, 30)
+        pos2 = trilaterate.Position(10.00001, 19.9999, 30.0003)
+        pos3 = trilaterate.Position(9.99999, 20.00001, 29.99999)
         
         self.assertTrue(pos1.is_almost_equal(pos2))
         self.assertTrue(pos1.is_almost_equal(pos3))
 
 
     def test_givenTwoPositionWithSameCoordinate_thenEqualityOperatorReturnTrue(self):
-        pos1 = Position(10, 20, 30)
-        pos2 = Position(10, 20, 30)
+        pos1 = trilaterate.Position(10, 20, 30)
+        pos2 = trilaterate.Position(10, 20, 30)
 
         self.assertTrue(pos1 == pos2)
 
@@ -26,19 +26,19 @@ class TestFarAxisOrigin2DPositionCalculator(unittest.TestCase):
 
     
     def test_givenEmptyList_returnNullPosition(self):
-        pos_calculator = FarAxisOrigin2DPositionCalculator()
+        pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
         result = pos_calculator.get_position_or_null_position([])
         self.assertTrue(result.is_null())
 
 
     def test_givenCompleteData_returnCorrectPosition(self):
-        pos_calculator = FarAxisOrigin2DPositionCalculator()
+        pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
         tag_dist_to_anchor_pos_and_anchor_pos = [
-            (math.sqrt(318), Position(0, 0, 0)), # origin
-            (math.sqrt(230), Position(22, 0, 0)), # far x
-            (math.sqrt(267), Position(0, 3, 0)), # far y
+            (math.sqrt(318), trilaterate.Position(0, 0, 0)), # origin
+            (math.sqrt(230), trilaterate.Position(22, 0, 0)), # far x
+            (math.sqrt(267), trilaterate.Position(0, 3, 0)), # far y
         ]
-        expected_tag_position = Position(13, 10, 0)
+        expected_tag_position = trilaterate.Position(13, 10, 0)
 
         calculated_tag_position = pos_calculator.get_position_or_null_position(tag_dist_to_anchor_pos_and_anchor_pos)
 

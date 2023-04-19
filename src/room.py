@@ -1,10 +1,10 @@
-from trilaterate import Position, FarAxisOrigin2DPositionCalculator
+import trilaterate
 
 
 class Anchor:
     
 
-    def __init__(self, id: str, pos: Position):
+    def __init__(self, id: str, pos: trilaterate.Position):
         self._id = id
         self._name = "AnchorSensor_stud_name"
         self._pos = pos
@@ -38,14 +38,14 @@ class Anchor:
         self._name = in_name
 
 
-    def set_position(self, in_pos: Position):
+    def set_position(self, in_pos: trilaterate.Position):
         self._pos = in_pos
 
 
 class Tag:
     
 
-    _pos_calculator = FarAxisOrigin2DPositionCalculator()
+    _pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
 
 
     # classmethod can access class attribute but not instance
@@ -199,13 +199,14 @@ class Room:
     def __init__(self):
         self._anchor_collection = AnchorCollection()
         self._tag_collection = TagCollection()
+        self._many_observer = []
 
 
     def get_many_anchor(self):
         return self._anchor_collection.get_many_anchor()
     
     
-    def upsert_anchor_position(self, in_anchor_id: str, in_anchor_pos: Position):
+    def upsert_anchor_position(self, in_anchor_id: str, in_anchor_pos: trilaterate.Position):
         try:
             self._anchor_collection.update_anchor_position(in_anchor_id, in_anchor_pos)
         except AnchorCollection.UpdateNonexistentAnchorIdException:
@@ -247,7 +248,31 @@ class Room:
             pass
 
 
+    def get_many_observer(self) -> list:
+        return self._many_observer
 
 
+class TagToJSONStringConverter:
+    
+    def __init__(self):
+        pass
+
+
+    def get_JSON(self, tag: Tag) -> str:
+        tag_id = tag.get_id()
+        tag_pos = tag.get_position()
+
+        if type(tag_pos) == trilaterate.NullPosition:
+            raise self.__class__.TagHasNullPositionException
+        
+        x_pos = tag_pos.get_x()
+        y_pos = tag_pos.get_y()
+        z_pos = tag_pos.get_z()
+
+        return f"\"source\": \"{tag_id}\", \"x\": {x_pos}, \"y\": {y_pos}, \"z\": {z_pos}"
+
+
+    class TagHasNullPositionException(Exception):
+        pass
 
 

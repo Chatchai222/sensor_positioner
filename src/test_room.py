@@ -1,18 +1,19 @@
 import unittest
 import math
 
-from trilaterate import Position, PositionCalculator
-from room import Anchor, Tag, Room, AnchorCollection, TagCollection
+import trilaterate
+import room
+
 
 class TestAnchorSensor(unittest.TestCase):
     
     
     def setUp(self):
-        self.anchor = Anchor("1000", Position(0, 22, 0))
+        self.anchor = room.Anchor("1000", trilaterate.Position(0, 22, 0))
 
 
     def test_canInitializeWithIdAndPosition(self):
-        anchor_sensor = Anchor("1000", Position(0, 22, 0))
+        anchor_sensor = room.Anchor("1000", trilaterate.Position(0, 22, 0))
 
 
     def test_givenNewAnchor_thenNameIsEmpty(self):
@@ -25,25 +26,25 @@ class TestAnchorSensor(unittest.TestCase):
 
 
     def test_canSetAndGetPosition(self):
-        self.anchor.set_position(Position(10, 20, 30))
-        self.assertEqual(self.anchor.get_position(), Position(10, 20, 30))
+        self.anchor.set_position(trilaterate.Position(10, 20, 30))
+        self.assertEqual(self.anchor.get_position(), trilaterate.Position(10, 20, 30))
 
     
     def test_canGetId(self):
-        anchor = Anchor("1000", Position(10, 20, 30))
+        anchor = room.Anchor("1000", trilaterate.Position(10, 20, 30))
         self.assertEqual(anchor.get_id(), "1000")
 
 
     def test_givenTwoAnchorWithSameId_thenTwoAnchorIsEqual(self):
-        anchor1 = Anchor("1000", Position(10, 20, 30))
-        anchor2 = Anchor("1000", Position(40, 50, 60))
+        anchor1 = room.Anchor("1000", trilaterate.Position(10, 20, 30))
+        anchor2 = room.Anchor("1000", trilaterate.Position(40, 50, 60))
 
         self.assertTrue(anchor1.is_equal(anchor2))
 
 
     def test_givenTwoAnchorWithSameId_thenEqualityOperatorReturnTrue(self):
-        anchor1 = Anchor("1000", Position(10, 20, 30))
-        anchor2 = Anchor("1000", Position(40, 50, 60))
+        anchor1 = room.Anchor("1000", trilaterate.Position(10, 20, 30))
+        anchor2 = room.Anchor("1000", trilaterate.Position(40, 50, 60))
 
         self.assertTrue(anchor1 == anchor2)
 
@@ -52,11 +53,11 @@ class TestTagSensor(unittest.TestCase):
     
 
     def setUp(self):
-        self.tag = Tag("2000")
+        self.tag = room.Tag("2000")
 
 
     def test_canInitializeWithId(self):
-        tag_sensor = Tag("2000")
+        tag_sensor = room.Tag("2000")
     
 
     def test_newTag_hasStudName(self):
@@ -70,10 +71,10 @@ class TestTagSensor(unittest.TestCase):
 
 
     def test_classCanGetPositionCalculator(self):
-        pos_calculator = Tag.get_position_calculator()
+        pos_calculator = room.Tag.get_position_calculator()
         pos_calculator_type = type(pos_calculator)
         
-        self.assertTrue(issubclass(pos_calculator_type, PositionCalculator))
+        self.assertTrue(issubclass(pos_calculator_type, trilaterate.PositionCalculator))
 
     
     def test_givenNewTag_thenEmptyManyDistToAnchorAndAnchor(self):
@@ -84,7 +85,7 @@ class TestTagSensor(unittest.TestCase):
 
     def test_givenNewTag_whenUpsertDistToAnchorAndAnchor_thenGetDistToAnchorAndAnchor(self):
         dist_to_anchor = 2.43
-        anchor = Anchor("1000", Position(10, 20, 30))
+        anchor = room.Anchor("1000", trilaterate.Position(10, 20, 30))
 
         self.tag.upsert_dist_to_anchor_and_anchor(dist_to_anchor, anchor)
         returned_dist_to_anchor, returned_anchor = self.tag.get_many_dist_to_anchor_and_anchor()[0]
@@ -95,7 +96,7 @@ class TestTagSensor(unittest.TestCase):
 
     def test_givenTagWithDistToAnchorAndAnchor_whenUpsertDistToAnchorAndAnchorWithDifferentDistToAnchorAndSameAnchor_thenGetUpdatedDistToAnchor(self):
         first_dist_to_anchor = 2.43
-        anchor = Anchor("1000", Position(10, 20, 30))
+        anchor = room.Anchor("1000", trilaterate.Position(10, 20, 30))
         second_dist_to_anchor = 2.75
 
         self.tag.upsert_dist_to_anchor_and_anchor(first_dist_to_anchor, anchor)
@@ -108,12 +109,12 @@ class TestTagSensor(unittest.TestCase):
         
     def test_givenTagWithManyDistToAnchorAndAnchor_whenGetPosition_thenReturnPosition(self):
         # Tag is assume at (3, 9, 17), but calculated pos will not have z pos
-        exp_calc_tag_pos = Position(3, 9, 0)
-        origin_anchor = Anchor("1000", Position(0, 0, 0))
+        exp_calc_tag_pos = trilaterate.Position(3, 9, 0)
+        origin_anchor = room.Anchor("1000", trilaterate.Position(0, 0, 0))
         dist_to_origin = math.sqrt(379)
-        far_x_anchor = Anchor("1001", Position(11, 0, 0))
+        far_x_anchor = room.Anchor("1001", trilaterate.Position(11, 0, 0))
         dist_to_far_x = math.sqrt(434)
-        far_y_anchor = Anchor("1002", Position(0, 5, 0))
+        far_y_anchor = room.Anchor("1002", trilaterate.Position(0, 5, 0))
         dist_to_far_y = math.sqrt(314)
         
         self.tag.upsert_dist_to_anchor_and_anchor(dist_to_origin, origin_anchor)
@@ -128,11 +129,11 @@ class TestRoom(unittest.TestCase):
     
 
     def setUp(self):
-        self.room = Room()
+        self.room = room.Room()
 
 
     def test_canInitializeRoom(self):
-        room = Room()
+        r = room.Room()
 
 
     def test_givenNewRoom_whenGetAnchor_thenReturnEmpty(self):
@@ -142,11 +143,11 @@ class TestRoom(unittest.TestCase):
 
     def test_givenRoomWithAnchorIdAndAnchorPos_whenUpsertAnchor_thenReturnAnchor(self):
         origin_id = "1000"
-        origin_pos = Position(0, 0, 0)
+        origin_pos = trilaterate.Position(0, 0, 0)
         far_x_id = "1001"
-        far_x_pos = Position(21, 0, 0)
-        origin = Anchor(origin_id, origin_pos)
-        far_x = Anchor(far_x_id, far_x_pos)
+        far_x_pos = trilaterate.Position(21, 0, 0)
+        origin = room.Anchor(origin_id, origin_pos)
+        far_x = room.Anchor(far_x_id, far_x_pos)
         
         self.room.upsert_anchor_position(origin_id, origin_pos)
         self.room.upsert_anchor_position(far_x_id, far_x_pos)
@@ -157,11 +158,11 @@ class TestRoom(unittest.TestCase):
 
 
     def test_givenRoomWithAnchorIdTenAndAnchorPos_whenUpsertAnchorIdTenAndNewAnchorPos_thenAnchorPosUpdatedToNewAnchorPos(self):
-        anchor = Anchor("10", Position(40, 50, 60))
+        anchor = room.Anchor("10", trilaterate.Position(40, 50, 60))
 
-        self.room.upsert_anchor_position("10", Position(10, 20, 30))
-        self.room.upsert_anchor_position("10", Position(40, 50, 60))
-        self.room.upsert_anchor_position("22", Position(2, 2, 2))
+        self.room.upsert_anchor_position("10", trilaterate.Position(10, 20, 30))
+        self.room.upsert_anchor_position("10", trilaterate.Position(40, 50, 60))
+        self.room.upsert_anchor_position("22", trilaterate.Position(2, 2, 2))
         many_anchor = self.room.get_many_anchor()
         returned_anchor = [anchor for anchor in many_anchor if anchor.get_id() == "10"][0]
 
@@ -169,7 +170,7 @@ class TestRoom(unittest.TestCase):
         
         
     def test_givenExistedAnchor_whenUpdateAnchorName_thenAnchorNameUpdated(self):
-        self.room.upsert_anchor_position("10", Position(10, 20, 30))
+        self.room.upsert_anchor_position("10", trilaterate.Position(10, 20, 30))
 
         self.room.update_anchor_name("10", "myanchorname")
         anchor = self.room.get_many_anchor()[0]
@@ -198,7 +199,7 @@ class TestRoom(unittest.TestCase):
         tag_id = "2000"
         anchor_id = "1000"
         dist = 6.83
-        anchor_pos = Position(10, 20, 30)
+        anchor_pos = trilaterate.Position(10, 20, 30)
         
         self.room.upsert_anchor_position(anchor_id, anchor_pos)
         self.room.upsert_tag_to_anchor_dist(tag_id, anchor_id, dist)
@@ -227,7 +228,7 @@ class TestRoom(unittest.TestCase):
         tag_name = "alice"
         tag_to_anchor_dist = "8.32"
         anchor_id = "1000"
-        anchor_pos = Position(10, 20, 30)
+        anchor_pos = trilaterate.Position(10, 20, 30)
 
         self.room.upsert_anchor_position(anchor_id, anchor_pos)
         self.room.upsert_tag_to_anchor_dist(tag_id, anchor_id, tag_to_anchor_dist)
@@ -236,13 +237,19 @@ class TestRoom(unittest.TestCase):
         tag = many_tag[0]
 
         self.assertEqual(tag.get_name(), tag_name)
-        
+
+
+    def test_givenNewRoom_whenGetManyObserver_thenManyObserverEmpty(self):
+        many_observer = self.room.get_many_observer()
+
+        self.assertEqual([], many_observer)
+                 
         
 class TestAnchorCollection(unittest.TestCase):
     
 
     def setUp(self):
-        self.anchor_collection = AnchorCollection()
+        self.anchor_collection = room.AnchorCollection()
         
 
     def test_givenInitializedAnchorCollection_thenEmptyCollection(self):
@@ -253,7 +260,7 @@ class TestAnchorCollection(unittest.TestCase):
 
     def test_givenAnchorIdAndPos_whenInsertAnchor_thenCollectionHasAnchor(self):
         anchor_id = "1000"
-        anchor_pos = Position(10, 20, 30)
+        anchor_pos = trilaterate.Position(10, 20, 30)
 
         self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         many_anchor = self.anchor_collection.get_many_anchor()
@@ -265,27 +272,27 @@ class TestAnchorCollection(unittest.TestCase):
     
     def test_givenAnchorIdAndPos_whenInsertAndCollectionHasSameExistingAnchorId_thenRaiseException(self):
         anchor_id = "1000"
-        anchor_pos = Position(10, 20, 30)
+        anchor_pos = trilaterate.Position(10, 20, 30)
 
         self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
 
-        self.assertRaises(AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, anchor_pos )
-        self.assertRaises(AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, Position(6, 6, 6))
+        self.assertRaises(room.AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, anchor_pos )
+        self.assertRaises(room.AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, trilaterate.Position(6, 6, 6))
 
 
     def test_givenAnchorIdAndPos_whenUpdateCollectionWithNoSameExistingAnchorId_thenRaiseException(self):
         anchor_id = "1000"
-        anchor_pos = Position(10, 20, 30)
+        anchor_pos = trilaterate.Position(10, 20, 30)
         
         self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         
-        self.assertRaises(AnchorCollection.UpdateNonexistentAnchorIdException, self.anchor_collection.update_anchor_position, "666", Position(10, 20, 30))
+        self.assertRaises(room.AnchorCollection.UpdateNonexistentAnchorIdException, self.anchor_collection.update_anchor_position, "666", trilaterate.Position(10, 20, 30))
 
 
     def test_givenAnchorIdAndPos_whenUpdateCollectionWithExistingAnchorId_thenUpdateAnchor(self):
         anchor_id = "1000"
-        anchor_pos = Position(10, 20, 30)
-        updated_pos = Position(40, 50, 60)
+        anchor_pos = trilaterate.Position(10, 20, 30)
+        updated_pos = trilaterate.Position(40, 50, 60)
         
         self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         self.anchor_collection.update_anchor_position(anchor_id, updated_pos)
@@ -297,16 +304,16 @@ class TestAnchorCollection(unittest.TestCase):
 
     def test_givenAnchorId_whenGetAnchorWithNonexistentAnchor_thenRaiseException(self):
         anchor_id = "1000"
-        anchor_pos = Position(10, 20, 30)
+        anchor_pos = trilaterate.Position(10, 20, 30)
 
         self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         
-        self.assertRaises(AnchorCollection.GetNonexistentAnchorIdException, self.anchor_collection.get_anchor, "666")
+        self.assertRaises(room.AnchorCollection.GetNonexistentAnchorIdException, self.anchor_collection.get_anchor, "666")
 
 
     def test_givenAnchorId_whenGetAnchorWithExistingAnchor_thenReturnedAnchor(self):
         anchor_id = "1000"
-        anchor_pos = Position(10, 20, 30)
+        anchor_pos = trilaterate.Position(10, 20, 30)
         
         self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
         returned_anchor = self.anchor_collection.get_anchor(anchor_id)
@@ -319,7 +326,7 @@ class TestTagCollection(unittest.TestCase):
 
     
     def setUp(self):
-        self.tag_collection = TagCollection()
+        self.tag_collection = room.TagCollection()
 
 
     def test_givenNewTagCollection_whenGetManyTag_thenManyTagIsEmpty(self):
@@ -342,13 +349,13 @@ class TestTagCollection(unittest.TestCase):
         self.tag_collection.insert_tag_by_id("1000")
         self.tag_collection.insert_tag_by_id("1001")
 
-        self.assertRaises(TagCollection.InsertSameTagIdException, self.tag_collection.insert_tag_by_id, "1000")
+        self.assertRaises(room.TagCollection.InsertSameTagIdException, self.tag_collection.insert_tag_by_id, "1000")
 
 
     def test_givenGetTag_whenCollectionHasNoTagWithSameId_thenRaiseException(self):
         self.tag_collection.insert_tag_by_id("1000")
 
-        self.assertRaises(TagCollection.GetNonexistentTagIdException, self.tag_collection.get_tag, "666")
+        self.assertRaises(room.TagCollection.GetNonexistentTagIdException, self.tag_collection.get_tag, "666")
 
 
     def test_givenGetTag_whenCollectionHasTag_thenReturnTag(self):
@@ -357,20 +364,75 @@ class TestTagCollection(unittest.TestCase):
 
         returned_tag = self.tag_collection.get_tag("1000")
 
-        self.assertEqual(Tag("1000"), returned_tag)
+        self.assertEqual(room.Tag("1000"), returned_tag)
+
+
+class TestTagToJSONStringConverter(unittest.TestCase):
+    
+    
+    def setUp(self):
+        self.converter = room.TagToJSONStringConverter()
+
+
+    def test_givenTagWithNullPosition_whenGetJSONfromTag_thenRaiseTagHasNullPositionException(self):
+        tag = room.Tag("2000")
+        
+        self.assertRaises(room.TagToJSONStringConverter.TagHasNullPositionException, self.converter.get_JSON, tag)
+        
+        
+    def test_givenTagWithValidPosition_whenGetJSONFromTag_thenReturnStringInJSONformat(self):
+        origin_id = "1000"
+        origin_pos = trilaterate.Position(0, 0, 0)
+        origin = room.Anchor(origin_id, origin_pos)
+        far_x_id = "1001"
+        far_x_pos = trilaterate.Position(11, 0, 0)
+        far_x = room.Anchor(far_x_id, far_x_pos)
+        far_y_id = "1002"
+        far_y_pos = trilaterate.Position(0, 5, 0)
+        far_y = room.Anchor(far_y_id, far_y_pos)
+        tag_id = "2000"
+        tag = room.Tag(tag_id)
+        tag_to_origin = math.sqrt(379)
+        tag_to_far_x = math.sqrt(434)
+        tag_to_far_y = math.sqrt(314)
+        # Actual tag pos mathematically would be (3, 9, 17)
+        # but for now algorithm is only for 2D space
+        expected_tag_pos = trilaterate.Position(3, 9, 0)
+
+        tag.upsert_dist_to_anchor_and_anchor(tag_to_origin, origin)
+        tag.upsert_dist_to_anchor_and_anchor(tag_to_far_x, far_x)
+        tag.upsert_dist_to_anchor_and_anchor(tag_to_far_y, far_y)
+        json_string = self.converter.get_JSON(tag)
+        tag_pos = tag.get_position()
+        tag_x_pos = tag_pos.get_x()
+        tag_y_pos = tag_pos.get_y()
+        tag_z_pos = tag_pos.get_z()
+
+
+        self.assertEqual(json_string, f"\"source\": \"2000\", \"x\": {tag_x_pos}, \"y\": {tag_y_pos}, \"z\": {tag_z_pos}")
+        
+
+class TagPositionPublisher(unittest.TestCase):
+
+    
+    pass
+
+
+        
+
 
 
 class TestGoldenBehaviour(unittest.TestCase):
     
 
     def test_givenSensorData_thenReturnedPosition(self):
-        room = Room()
+        r = room.Room()
         origin_id = "1000"
-        origin_pos = Position(0, 0, 0)
+        origin_pos = trilaterate.Position(0, 0, 0)
         far_x_id = "1001"
-        far_x_pos = Position(11, 0, 0)
+        far_x_pos = trilaterate.Position(11, 0, 0)
         far_y_id = "1002"
-        far_y_pos = Position(0, 5, 0)
+        far_y_pos = trilaterate.Position(0, 5, 0)
         tag_id = "2000"
         tag_name = "alice"
         tag_to_origin = math.sqrt(379)
@@ -378,15 +440,15 @@ class TestGoldenBehaviour(unittest.TestCase):
         tag_to_far_y = math.sqrt(314)
         # Actual tag pos mathematically would be (3, 9, 17)
         # but for now algorithm is only for 2D space
-        expected_tag_pos = Position(3, 9, 0)
+        expected_tag_pos = trilaterate.Position(3, 9, 0)
 
-        room.upsert_anchor_position(origin_id, origin_pos)
-        room.upsert_anchor_position(far_x_id, far_x_pos)
-        room.upsert_anchor_position(far_y_id, far_y_pos)
-        room.upsert_tag_to_anchor_dist(tag_id, origin_id, tag_to_origin)
-        room.upsert_tag_to_anchor_dist(tag_id, far_x_id, tag_to_far_x)
-        room.upsert_tag_to_anchor_dist(tag_id, far_y_id, tag_to_far_y)
-        many_tag = room.get_many_tag()
+        r.upsert_anchor_position(origin_id, origin_pos)
+        r.upsert_anchor_position(far_x_id, far_x_pos)
+        r.upsert_anchor_position(far_y_id, far_y_pos)
+        r.upsert_tag_to_anchor_dist(tag_id, origin_id, tag_to_origin)
+        r.upsert_tag_to_anchor_dist(tag_id, far_x_id, tag_to_far_x)
+        r.upsert_tag_to_anchor_dist(tag_id, far_y_id, tag_to_far_y)
+        many_tag = r.get_many_tag()
         tag = many_tag[0]
         calculated_tag_pos = tag.get_position()
         print(calculated_tag_pos)
