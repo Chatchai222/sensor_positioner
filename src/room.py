@@ -1,5 +1,6 @@
 import trilaterate
-
+import math
+import json
 
 class Anchor:
     
@@ -202,6 +203,16 @@ class Room:
         self._many_observer = []
 
 
+    def populate_with_default_anchor_and_tag(self):
+        self.upsert_anchor_position("1000", trilaterate.Position(0, 0, 0))
+        self.upsert_anchor_position("1001", trilaterate.Position(0.5, 0, 0))
+        self.upsert_anchor_position("1002", trilaterate.Position(0, 0.5, 0))
+
+        self.upsert_tag_to_anchor_dist("2000", "1000", math.sqrt(0.5))
+        self.upsert_tag_to_anchor_dist("2000", "1001", 0.5)
+        self.upsert_tag_to_anchor_dist("2000", "1002", 0.5)
+
+
     def get_many_anchor(self):
         return self._anchor_collection.get_many_anchor()
     
@@ -211,12 +222,15 @@ class Room:
             self._anchor_collection.update_anchor_position(in_anchor_id, in_anchor_pos)
         except AnchorCollection.UpdateNonexistentAnchorIdException:
             self._anchor_collection.insert_anchor_id_and_pos(in_anchor_id, in_anchor_pos)
+
+        self.notify_observer()
     
 
     def update_anchor_name(self, in_anchor_id: str, in_name: str):
         try:
             anchor = self._anchor_collection.get_anchor(in_anchor_id)
             anchor.set_name(in_name)
+            self.notify_observer()
         except AnchorCollection.GetNonexistentAnchorIdException:
             pass
     
@@ -225,7 +239,7 @@ class Room:
         return self._tag_collection.get_many_tag()
     
 
-    def upsert_tag_to_anchor_dist(self, in_tag_id, in_anchor_id, in_dist):
+    def upsert_tag_to_anchor_dist(self, in_tag_id: str, in_anchor_id: str, in_dist: float):
         try:
             anchor = self._anchor_collection.get_anchor(in_anchor_id)
         except AnchorCollection.GetNonexistentAnchorIdException:
@@ -238,12 +252,14 @@ class Room:
             tag = self._tag_collection.get_tag(in_tag_id)
 
         tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
+        self.notify_observer()
 
 
     def update_tag_name(self, in_tag_id, in_tag_name):
         try:
             tag = self._tag_collection.get_tag(in_tag_id)
             tag.set_name(in_tag_name)
+            self.notify_observer()
         except TagCollection.GetNonexistentTagIdException:
             pass
 
@@ -251,6 +267,15 @@ class Room:
     def get_many_observer(self) -> list:
         return self._many_observer
 
+
+    def add_observer(self, in_observer):
+        self._many_observer.append(in_observer)
+
+
+    def notify_observer(self):
+        for each_observer in self._many_observer:
+            each_observer.notify(self)
+        
 
 class TagToJSONStringConverter:
     
@@ -274,5 +299,68 @@ class TagToJSONStringConverter:
 
     class TagHasNullPositionException(Exception):
         pass
+    
+
+class MockStringPublisher:
+    
+
+    def __init__(self):
+        self._recent_publish = ""
 
 
+    def publish(self, in_string: str):
+        self._recent_publish = in_string
+
+
+    def get_recent_publish(self) -> str:
+        return self._recent_publish
+
+
+class TagPositionPublisher:
+
+    
+    def __init__(self, in_string_publisher=MockStringPublisher()):
+        self._string_publisher = in_string_publisher
+        self._tag_to_string_converter = TagToJSONStringConverter()
+        self._notify_count = 0
+
+
+    def notify(self, in_room: Room):
+        self._notify_count += 1
+
+        many_tag = in_room.get_many_tag()
+        for each_tag in many_tag:
+            try:
+                json_string = self._tag_to_string_converter.get_JSON(each_tag)
+                self._string_publisher.publish(json_string)
+            except self._tag_to_string_converter.__class__.TagHasNullPositionException:
+                pass
+
+
+    def get_notify_count(self):
+        return self._notify_count
+    
+
+    def get_string_publisher(self):
+        return self._string_publisher
+
+    
+class RoomRangeUpdater:
+
+
+    def __init__(self, in_room: Room):
+        self._room = in_room
+
+
+    def get_room(self) -> Room:
+        return self._room
+    
+
+    def update_room(self, in_str):
+        msg_dict = json.loads(in_str)
+
+        tag_id = msg_dict["source"]
+        anchor_id = msg_dict["destination"]
+        dist = float(msg_dict["range"])
+
+        self._room.upsert_tag_to_anchor_dist(tag_id, anchor_id, dist)

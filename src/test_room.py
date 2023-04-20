@@ -243,7 +243,69 @@ class TestRoom(unittest.TestCase):
         many_observer = self.room.get_many_observer()
 
         self.assertEqual([], many_observer)
-                 
+
+
+    def test_givenObserver_whenAddObserver_thenManyObserverHasObserver(self):
+        tag_pos_publisher = room.TagPositionPublisher()
+
+        self.room.add_observer(tag_pos_publisher)
+        many_observer = self.room.get_many_observer()
+        returned_observer = many_observer[0]
+
+        self.assertTrue(tag_pos_publisher is returned_observer)
+
+
+    def test_givenManyObserverHasObserver_whenNotifyObserver_thenObserverIsNotified(self):
+        tag_pos_pub = room.TagPositionPublisher()
+        self.room.add_observer(tag_pos_pub)
+        
+        initial_tag_pos_pub_notify_count = tag_pos_pub.get_notify_count()
+        self.room.notify_observer()
+        after_tag_pos_pub_notify_count = tag_pos_pub.get_notify_count()
+
+        self.assertEqual(initial_tag_pos_pub_notify_count + 1, after_tag_pos_pub_notify_count)
+        
+        
+    def test_givenManyObserverHasObserver_whenUpdateOrUpsertSuccessful_thenObserverIsNotified(self):
+        tag_pos_pub = room.TagPositionPublisher()
+        self.room.add_observer(tag_pos_pub)
+        
+        initial_notify_count = tag_pos_pub.get_notify_count()
+        self.room.upsert_anchor_position("1000", trilaterate.Position(0, 0, 0))
+        notify_count_A = tag_pos_pub.get_notify_count()
+        self.room.update_anchor_name("1000", "origin_anchor")
+        notify_count_B = tag_pos_pub.get_notify_count()
+        self.room.upsert_tag_to_anchor_dist("2000", "1000", 3.2)
+        notify_count_C = tag_pos_pub.get_notify_count()
+        self.room.update_tag_name("2000", "avatar1")
+        notify_count_D = tag_pos_pub.get_notify_count()
+
+        self.assertEqual(initial_notify_count + 1, notify_count_A)
+        self.assertEqual(notify_count_A + 1, notify_count_B)
+        self.assertEqual(notify_count_B + 1, notify_count_C)
+        self.assertEqual(notify_count_C + 1, notify_count_D)
+        
+
+    def test_givenNewRoom_whenPopulateWithDefaultAnchorAndTag_thenRoomHasDefaultAnchorAndTag(self):
+        origin = room.Anchor("1000", trilaterate.Position(0, 0, 0))
+        far_x = room.Anchor("1001", trilaterate.Position(0.5, 0, 0))
+        far_y = room.Anchor("1002", trilaterate.Position(0, 0.5, 0))
+        tag = room.Tag("2000")
+        tag_pos = trilaterate.Position(0.5, 0.5, 0)
+
+        self.room.populate_with_default_anchor_and_tag()
+        many_anchor = self.room.get_many_anchor()
+        many_tag = self.room.get_many_tag()
+        returned_tag = many_tag[0]
+        returned_tag_pos = returned_tag.get_position()
+
+        self.assertIn(origin, many_anchor)
+        self.assertIn(far_x, many_anchor)
+        self.assertIn(far_y, many_anchor)
+        self.assertTrue(tag_pos.is_almost_equal(returned_tag_pos))
+
+        
+
         
 class TestAnchorCollection(unittest.TestCase):
     
@@ -412,12 +474,99 @@ class TestTagToJSONStringConverter(unittest.TestCase):
         self.assertEqual(json_string, f"\"source\": \"2000\", \"x\": {tag_x_pos}, \"y\": {tag_y_pos}, \"z\": {tag_z_pos}")
         
 
-class TagPositionPublisher(unittest.TestCase):
-
+class TestTagPositionPublisher(unittest.TestCase):
     
-    pass
+
+    def setUp(self):
+        self.position_publisher = room.TagPositionPublisher()
 
 
+    def test_canBeNotify(self):
+        r = room.Room()
+        self.position_publisher.notify(r)
+
+
+    def test_givenRoom_whenNotify_thenNotifyCountIncremented(self):
+        r = room.Room()
+        
+        initial_notify_count = self.position_publisher.get_notify_count()
+        self.position_publisher.notify(r)
+        after_notify_count = self.position_publisher.get_notify_count()
+
+        self.assertEqual(initial_notify_count + 1, after_notify_count)
+        
+
+    def test_givenRoom_whenNotify_thenPublishTagPoistion(self):
+        r = room.Room()
+        r.populate_with_default_anchor_and_tag()
+
+        tag_pos_pub = room.TagPositionPublisher(room.MockStringPublisher())
+        tag_pos_pub.notify(r)
+        string_publisher = tag_pos_pub.get_string_publisher()
+        published_string = string_publisher.get_recent_publish()
+        
+        expected_string = f"\"source\": \"2000\", \"x\": 0.5, \"y\": 0.5, \"z\": 0"
+        self.assertEqual(published_string, expected_string)
+
+
+    def test_givenRoomWithTagWithNullPosition_whenNotify_thenPublishNothing(self):
+        r = room.Room()
+
+        tag_pos_pub = room.TagPositionPublisher(room.MockStringPublisher())
+        tag_pos_pub.notify(r)
+        string_publisher = tag_pos_pub.get_string_publisher()
+        published_string = string_publisher.get_recent_publish()
+
+        self.assertEqual("", published_string)
+
+        
+class TestMockStringPublisher(unittest.TestCase):
+
+
+    def test_canInitialize(self):
+        mock_string_publisher = room.MockStringPublisher()
+    
+
+    def test_givenPublishStringX_whenGetPublished_thenReturnStringX(self):
+        mock_string_publisher = room.MockStringPublisher()
+        
+        mock_string_publisher.publish("hello world")
+        returned_publish = mock_string_publisher.get_recent_publish()
+
+        self.assertEqual("hello world", returned_publish)
+
+
+class TestRoomRangeUpdater(unittest.TestCase):
+    
+
+    def test_givenRoom_whenInitialize_thenHasRoom(self):
+        r = room.Room()
+        range_updater = room.RoomRangeUpdater(r)
+        
+        returned_room = range_updater.get_room()
+
+        self.assertIs(r, returned_room)
+
+
+    def test_givenHasRoom_whenUpdateRoom_thenRoomIsUpdated(self):
+        r = room.Room()
+        r.populate_with_default_anchor_and_tag()
+        range_updater = room.RoomRangeUpdater(r)
+        message = "{\"source\": \"2000\", \"destination\": \"1000\", \"range\": \"69\"}"
+
+        range_updater.update_room(message)
+        tag = r.get_many_tag()[0]
+        many_dist_to_anchor_and_anchor = tag.get_many_dist_to_anchor_and_anchor()
+        for dist_and_anchor in many_dist_to_anchor_and_anchor:
+            dist, anchor = dist_and_anchor
+            if dist == 69:
+                break
+
+        self.assertEqual(dist, 69)
+        self.assertEqual(anchor.get_id(), "1000")
+        
+        
+        
         
 
 
