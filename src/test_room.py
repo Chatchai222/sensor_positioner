@@ -500,9 +500,9 @@ class TestTagPositionPublisher(unittest.TestCase):
         r = room.Room()
         r.populate_with_default_anchor_and_tag()
 
-        tag_pos_pub = room.TagPositionPublisher(room.MockStringPublisher())
+        tag_pos_pub = room.TagPositionPublisher(room.MockMessageBroker())
         tag_pos_pub.notify(r)
-        string_publisher = tag_pos_pub.get_string_publisher()
+        string_publisher = tag_pos_pub.get_message_broker()
         published_string = string_publisher.get_recent_publish()
         
         expected_string = f"\"source\": \"2000\", \"x\": 0.5, \"y\": 0.5, \"z\": 0"
@@ -512,28 +512,53 @@ class TestTagPositionPublisher(unittest.TestCase):
     def test_givenRoomWithTagWithNullPosition_whenNotify_thenPublishNothing(self):
         r = room.Room()
 
-        tag_pos_pub = room.TagPositionPublisher(room.MockStringPublisher())
+        tag_pos_pub = room.TagPositionPublisher(room.MockMessageBroker())
         tag_pos_pub.notify(r)
-        string_publisher = tag_pos_pub.get_string_publisher()
+        string_publisher = tag_pos_pub.get_message_broker()
         published_string = string_publisher.get_recent_publish()
 
         self.assertEqual("", published_string)
 
         
-class TestMockStringPublisher(unittest.TestCase):
+class TestMockMessageBroker(unittest.TestCase):
 
 
-    def test_canInitialize(self):
-        mock_string_publisher = room.MockStringPublisher()
-    
+    def setUp(self):
+        self.mock_msg_broker = room.MockMessageBroker()
+
 
     def test_givenPublishStringX_whenGetPublished_thenReturnStringX(self):
-        mock_string_publisher = room.MockStringPublisher()
-        
-        mock_string_publisher.publish("hello world")
-        returned_publish = mock_string_publisher.get_recent_publish()
+        self.mock_msg_broker.publish("hello world")
+        returned_publish = self.mock_msg_broker.get_recent_publish()
 
         self.assertEqual("hello world", returned_publish)
+    
+    
+    def test_givenOnMessageCallback_whenSetOnMessageCallback_thenGetOnMessageCallbackReturnCallback(self):
+        def simple_callback(in_str):
+            pass
+        callback = simple_callback
+
+        self.mock_msg_broker.set_on_message_callback(callback)
+        returned_callback = self.mock_msg_broker.get_on_message_callback()
+
+        self.assertIs(callback, returned_callback)
+        
+
+    def test_givenHaveOnMessageCallback_whenOnMessage_thenExecuteCallback(self):
+        def simple_callback(in_str):
+            simple_callback.is_called = True
+        simple_callback.is_called = False
+
+        self.mock_msg_broker.set_on_message_callback(simple_callback)
+        self.mock_msg_broker.on_message("hello")
+
+        self.assertTrue(simple_callback.is_called)
+
+        
+        
+
+
 
 
 class TestRoomRangeUpdater(unittest.TestCase):

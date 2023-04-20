@@ -301,11 +301,12 @@ class TagToJSONStringConverter:
         pass
     
 
-class MockStringPublisher:
+class MockMessageBroker:
     
 
     def __init__(self):
         self._recent_publish = ""
+        self._on_message_callback = None
 
 
     def publish(self, in_string: str):
@@ -316,11 +317,25 @@ class MockStringPublisher:
         return self._recent_publish
 
 
+    def set_on_message_callback(self, in_callback):
+        self._on_message_callback = in_callback
+        
+
+    def get_on_message_callback(self):
+        return self._on_message_callback
+    
+
+    def on_message(self, in_message):
+        if self._on_message_callback is not None:
+            self._on_message_callback(in_message)
+        
+
+
 class TagPositionPublisher:
 
     
-    def __init__(self, in_string_publisher=MockStringPublisher()):
-        self._string_publisher = in_string_publisher
+    def __init__(self, in_message_broker=MockMessageBroker()):
+        self._message_broker = in_message_broker
         self._tag_to_string_converter = TagToJSONStringConverter()
         self._notify_count = 0
 
@@ -332,7 +347,7 @@ class TagPositionPublisher:
         for each_tag in many_tag:
             try:
                 json_string = self._tag_to_string_converter.get_JSON(each_tag)
-                self._string_publisher.publish(json_string)
+                self._message_broker.publish(json_string)
             except self._tag_to_string_converter.__class__.TagHasNullPositionException:
                 pass
 
@@ -341,8 +356,8 @@ class TagPositionPublisher:
         return self._notify_count
     
 
-    def get_string_publisher(self):
-        return self._string_publisher
+    def get_message_broker(self):
+        return self._message_broker
 
     
 class RoomRangeUpdater:
