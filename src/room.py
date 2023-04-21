@@ -363,8 +363,9 @@ class TagPositionPublisher:
 class RoomRangeUpdater:
 
 
-    def __init__(self, in_room: Room):
+    def __init__(self, in_room: Room, in_message_broker=MockMessageBroker()):
         self._room = in_room
+        self._message_broker = in_message_broker
 
 
     def get_room(self) -> Room:
@@ -379,3 +380,14 @@ class RoomRangeUpdater:
         dist = float(msg_dict["range"])
 
         self._room.upsert_tag_to_anchor_dist(tag_id, anchor_id, dist)
+
+
+    def set_message_broker(self, in_message_broker):
+        self._message_broker = in_message_broker
+        on_msg_callback = lambda in_msg: self.update_room(in_msg)
+        self._message_broker.set_on_message_callback(on_msg_callback)
+
+
+    def get_message_broker(self):
+        return self._message_broker
+    

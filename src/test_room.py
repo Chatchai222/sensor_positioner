@@ -557,11 +557,13 @@ class TestMockMessageBroker(unittest.TestCase):
 
         
         
-
-
-
-
 class TestRoomRangeUpdater(unittest.TestCase):
+
+
+    def setUp(self):
+        r = room.Room()
+        r.populate_with_default_anchor_and_tag()
+        self.range_updater = room.RoomRangeUpdater(r)
     
 
     def test_givenRoom_whenInitialize_thenHasRoom(self):
@@ -574,12 +576,10 @@ class TestRoomRangeUpdater(unittest.TestCase):
 
 
     def test_givenHasRoom_whenUpdateRoom_thenRoomIsUpdated(self):
-        r = room.Room()
-        r.populate_with_default_anchor_and_tag()
-        range_updater = room.RoomRangeUpdater(r)
         message = "{\"source\": \"2000\", \"destination\": \"1000\", \"range\": \"69\"}"
-
-        range_updater.update_room(message)
+        
+        self.range_updater.update_room(message)
+        r = self.range_updater.get_room()
         tag = r.get_many_tag()[0]
         many_dist_to_anchor_and_anchor = tag.get_many_dist_to_anchor_and_anchor()
         for dist_and_anchor in many_dist_to_anchor_and_anchor:
@@ -591,7 +591,33 @@ class TestRoomRangeUpdater(unittest.TestCase):
         self.assertEqual(anchor.get_id(), "1000")
         
         
+    def test_givenMessageBroker_whenSetMessageBroker_thenGetMessageBrokerReturnMessageBroker(self):
+        mock_message_broker = room.MockMessageBroker()
+
+        self.range_updater.set_message_broker(mock_message_broker)
+        returned_message_broker = self.range_updater.get_message_broker()
+
+        self.assertIs(mock_message_broker, returned_message_broker)
+
+
+    def test_givenSetMessageBroker_whenMessageBrokerOnMessage_thenRoomIsUpdated(self):
+        mock_message_broker = room.MockMessageBroker()
+        r = self.range_updater.get_room()
+
+        self.range_updater.set_message_broker(mock_message_broker)
+        mock_message_broker.on_message("{\"source\": \"2000\", \"destination\": \"1000\", \"range\": \"420\"}")
+        many_tag = r.get_many_tag()
+        tag: room.Tag = many_tag[0]
+        for dist_and_anchor in tag.get_many_dist_to_anchor_and_anchor():
+            dist, anchor = dist_and_anchor
+            if anchor.get_id() == "1000":
+                break
+
+        self.assertEqual(dist, 420)
         
+
+
+
         
 
 

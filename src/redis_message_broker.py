@@ -1,7 +1,7 @@
 from redis import Redis
 import time
 
-class RedisPubSubAdapter:
+class RedisMessageBroker:
     def __init__(self, hostname: str, port: int = 6379, auth: str = None):
         # Defining Class Variables
         self.PUBLISH_CHANNEL = "tag:motioncapture.coordinates"
@@ -35,7 +35,7 @@ class RedisPubSubAdapter:
         if self.callback:
             self.callback(message["data"])
 
-    def set_callback(self, callback):
+    def set_on_message_callback(self, callback):
         self.callback = callback
 
     def publish(self, message: str):
