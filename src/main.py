@@ -2,7 +2,7 @@ import room
 import redis_message_broker
 
 def main():
-    redis_msg_broker = redis_message_broker.RedisMessageBroker("0.0.0.0")
+    redis_msg_broker = redis_message_broker.RedisMessageBroker("localhost")
     r = room.Room()
     tag_pos_pub = room.TagPositionPublisher(redis_msg_broker)
     room_range_updater = room.RoomRangeUpdater(r)

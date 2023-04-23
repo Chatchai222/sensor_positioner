@@ -224,16 +224,7 @@ class Room:
             self._anchor_collection.insert_anchor_id_and_pos(in_anchor_id, in_anchor_pos)
 
         self.notify_observer()
-    
-
-    def update_anchor_name(self, in_anchor_id: str, in_name: str):
-        try:
-            anchor = self._anchor_collection.get_anchor(in_anchor_id)
-            anchor.set_name(in_name)
-            self.notify_observer()
-        except AnchorCollection.GetNonexistentAnchorIdException:
-            pass
-    
+     
 
     def get_many_tag(self):
         return self._tag_collection.get_many_tag()
@@ -253,15 +244,6 @@ class Room:
 
         tag.upsert_dist_to_anchor_and_anchor(in_dist, anchor)
         self.notify_observer()
-
-
-    def update_tag_name(self, in_tag_id, in_tag_name):
-        try:
-            tag = self._tag_collection.get_tag(in_tag_id)
-            tag.set_name(in_tag_name)
-            self.notify_observer()
-        except TagCollection.GetNonexistentTagIdException:
-            pass
 
 
     def get_many_observer(self) -> list:

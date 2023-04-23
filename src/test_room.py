@@ -167,15 +167,6 @@ class TestRoom(unittest.TestCase):
         returned_anchor = [anchor for anchor in many_anchor if anchor.get_id() == "10"][0]
 
         self.assertEqual(anchor.get_position(), returned_anchor.get_position())
-        
-        
-    def test_givenExistedAnchor_whenUpdateAnchorName_thenAnchorNameUpdated(self):
-        self.room.upsert_anchor_position("10", trilaterate.Position(10, 20, 30))
-
-        self.room.update_anchor_name("10", "myanchorname")
-        anchor = self.room.get_many_anchor()[0]
-
-        self.assertEqual(anchor.get_name(), "myanchorname")
 
 
     def test_givenNewRoom_whenGetManyTag_thenManyTagIsEmpty(self):
@@ -213,32 +204,6 @@ class TestRoom(unittest.TestCase):
         self.assertEqual(anchor.get_position(), anchor_pos)
 
 
-    def test_givenUpdateTagName_whenNoTagExist_thenDoNothing(self):
-        tag_id = "2000"
-        tag_name = "alice"
-        
-        self.room.update_tag_name(tag_id, tag_name)
-        many_tag = self.room.get_many_tag()
-        
-        self.assertEqual(many_tag, [])
-
-
-    def test_givenUpdateTagName_whenTagIdMatch_thenUpdateTagName(self):
-        tag_id = "2000"
-        tag_name = "alice"
-        tag_to_anchor_dist = "8.32"
-        anchor_id = "1000"
-        anchor_pos = trilaterate.Position(10, 20, 30)
-
-        self.room.upsert_anchor_position(anchor_id, anchor_pos)
-        self.room.upsert_tag_to_anchor_dist(tag_id, anchor_id, tag_to_anchor_dist)
-        self.room.update_tag_name(tag_id, tag_name)
-        many_tag = self.room.get_many_tag()
-        tag = many_tag[0]
-
-        self.assertEqual(tag.get_name(), tag_name)
-
-
     def test_givenNewRoom_whenGetManyObserver_thenManyObserverEmpty(self):
         many_observer = self.room.get_many_observer()
 
@@ -273,17 +238,12 @@ class TestRoom(unittest.TestCase):
         initial_notify_count = tag_pos_pub.get_notify_count()
         self.room.upsert_anchor_position("1000", trilaterate.Position(0, 0, 0))
         notify_count_A = tag_pos_pub.get_notify_count()
-        self.room.update_anchor_name("1000", "origin_anchor")
-        notify_count_B = tag_pos_pub.get_notify_count()
         self.room.upsert_tag_to_anchor_dist("2000", "1000", 3.2)
-        notify_count_C = tag_pos_pub.get_notify_count()
-        self.room.update_tag_name("2000", "avatar1")
-        notify_count_D = tag_pos_pub.get_notify_count()
+        notify_count_B = tag_pos_pub.get_notify_count()
 
         self.assertEqual(initial_notify_count + 1, notify_count_A)
         self.assertEqual(notify_count_A + 1, notify_count_B)
-        self.assertEqual(notify_count_B + 1, notify_count_C)
-        self.assertEqual(notify_count_C + 1, notify_count_D)
+
         
 
     def test_givenNewRoom_whenPopulateWithDefaultAnchorAndTag_thenRoomHasDefaultAnchorAndTag(self):
