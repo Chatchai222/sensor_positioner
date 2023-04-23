@@ -25,14 +25,47 @@ class TestPosition(unittest.TestCase):
 class TestFarAxisOrigin2DPositionCalculator(unittest.TestCase):
 
     
-    def test_givenEmptyList_returnNullPosition(self):
-        pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
-        result = pos_calculator.get_position_or_null_position([])
-        self.assertTrue(result.is_null())
+    def setUp(self):
+        self.pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
+
+    def test_givenEmptyList_whenGetPosition_thenRaiseMissingOriginPosition(self):
+        self.assertRaises(trilaterate.FarAxisOrigin2DPositionCalculator.MissingOriginPositionException, self.pos_calculator.get_position, [])
+        
+
+    def test_givenMissingOriginPosition_whenGetPosition_thenRaiseMissingOriginPosition(self):
+        many_tag_dist_to_anchor_pos = [ 
+            (math.sqrt(66), trilaterate.Position(22, 0, 0)),
+            (math.sqrt(67), trilaterate.Position(0, 22, 0)),
+            (math.sqrt(342), trilaterate.Position(0, 0, 22)),
+            (math.sqrt(22), trilaterate.Position(32, 12, 23)),
+        ]
+
+        self.assertRaises(self.pos_calculator.__class__.MissingOriginPositionException, self.pos_calculator.get_position, many_tag_dist_to_anchor_pos)
+
+
+    def test_givenMissingFarXPosition_whenGetPosition_thenRaiseMissingFarXPosition(self):
+        many_tag_dist_to_anchor_pos = [ 
+            (math.sqrt(66), trilaterate.Position(0, 0, 0)),
+            (math.sqrt(67), trilaterate.Position(0, 22, 0)),
+            (math.sqrt(342), trilaterate.Position(0, 0, 22)),
+            (math.sqrt(22), trilaterate.Position(32, 12, 23)),
+        ]
+
+        self.assertRaises(self.pos_calculator.__class__.MissingFarXPositionException, self.pos_calculator.get_position, many_tag_dist_to_anchor_pos)
+
+
+    def test_givenMissingFarYPosition_whenGetPosition_thenRaiseMissingFarYPosition(self):
+        many_tag_dist_to_anchor_pos = [ 
+            (math.sqrt(66), trilaterate.Position(0, 0, 0)),
+            (math.sqrt(67), trilaterate.Position(13, 0, 0)),
+            (math.sqrt(342), trilaterate.Position(0, 0, 22)),
+            (math.sqrt(22), trilaterate.Position(32, 12, 23)),
+        ]
+
+        self.assertRaises(self.pos_calculator.__class__.MissingFarYPositionException, self.pos_calculator.get_position, many_tag_dist_to_anchor_pos)
 
 
     def test_givenCompleteData_returnCorrectPosition(self):
-        pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
         tag_dist_to_anchor_pos_and_anchor_pos = [
             (math.sqrt(318), trilaterate.Position(0, 0, 0)), # origin
             (math.sqrt(230), trilaterate.Position(22, 0, 0)), # far x
@@ -40,7 +73,7 @@ class TestFarAxisOrigin2DPositionCalculator(unittest.TestCase):
         ]
         expected_tag_position = trilaterate.Position(13, 10, 0)
 
-        calculated_tag_position = pos_calculator.get_position_or_null_position(tag_dist_to_anchor_pos_and_anchor_pos)
+        calculated_tag_position = self.pos_calculator.get_position(tag_dist_to_anchor_pos_and_anchor_pos)
 
         self.assertEqual(expected_tag_position.get_x(), round(calculated_tag_position.get_x()))
         self.assertEqual(expected_tag_position.get_y(), round(calculated_tag_position.get_y()))

@@ -49,12 +49,6 @@ class Tag:
     _pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
 
 
-    # classmethod can access class attribute but not instance
-    @classmethod
-    def get_position_calculator(self):
-        return self._pos_calculator
-    
-
     def __init__(self, id: str):
         self._id = id
         self._name = "TagSensor_stud_name"
@@ -77,7 +71,7 @@ class Tag:
         return self._many_dist_to_anchor_and_anchor
     
 
-    def upsert_dist_to_anchor_and_anchor(self, in_dist_to_anchor, in_anchor):
+    def upsert_dist_to_anchor_and_anchor(self, in_dist_to_anchor: float, in_anchor: Anchor):
         is_dist_updated = False
         for i in range(len(self._many_dist_to_anchor_and_anchor)):
             _, anchor = self._many_dist_to_anchor_and_anchor[i]
@@ -95,7 +89,7 @@ class Tag:
         for dist, anchor in self._many_dist_to_anchor_and_anchor:
             many_dist_to_anchor_and_anchor_pos.append( [dist, anchor.get_position()])
         
-        return self.__class__._pos_calculator.get_position_or_null_position(many_dist_to_anchor_and_anchor_pos)
+        return self.__class__._pos_calculator.get_position(many_dist_to_anchor_and_anchor_pos)
     
 
     def __eq__(self, other):
@@ -267,10 +261,11 @@ class TagToJSONStringConverter:
 
     def get_JSON(self, tag: Tag) -> str:
         tag_id = tag.get_id()
-        tag_pos = tag.get_position()
 
-        if type(tag_pos) == trilaterate.NullPosition:
-            raise self.__class__.TagHasNullPositionException
+        try:
+            tag_pos = tag.get_position()
+        except Exception:
+            raise self.UnableToGetTagPositionException
         
         x_pos = tag_pos.get_x()
         y_pos = tag_pos.get_y()
@@ -279,7 +274,7 @@ class TagToJSONStringConverter:
         return f"\"source\": \"{tag_id}\", \"x\": {x_pos}, \"y\": {y_pos}, \"z\": {z_pos}"
 
 
-    class TagHasNullPositionException(Exception):
+    class UnableToGetTagPositionException(Exception):
         pass
     
 
@@ -312,7 +307,6 @@ class MockMessageBroker:
             self._on_message_callback(in_message)
         
 
-
 class TagPositionPublisher:
 
     
@@ -341,7 +335,23 @@ class TagPositionPublisher:
     def get_message_broker(self):
         return self._message_broker
 
+
+class MockRoomObserver:
     
+
+    def __init__(self):
+        self._notify_count: int = 0
+
+    
+    def get_notify_count(self) -> int:
+        return self._notify_count 
+    
+
+    def notify(self, r: Room):
+        self._notify_count += 1
+
+
+
 class RoomRangeUpdater:
 
 

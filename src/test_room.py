@@ -5,7 +5,7 @@ import trilaterate
 import room
 
 
-class TestAnchorSensor(unittest.TestCase):
+class TestAnchor(unittest.TestCase):
     
     
     def setUp(self):
@@ -49,7 +49,7 @@ class TestAnchorSensor(unittest.TestCase):
         self.assertTrue(anchor1 == anchor2)
 
 
-class TestTagSensor(unittest.TestCase):
+class TestTag(unittest.TestCase):
     
 
     def setUp(self):
@@ -68,13 +68,6 @@ class TestTagSensor(unittest.TestCase):
         self.tag.set_name("mytag1")
         
         self.assertEqual(self.tag.get_name(), "mytag1")
-
-
-    def test_classCanGetPositionCalculator(self):
-        pos_calculator = room.Tag.get_position_calculator()
-        pos_calculator_type = type(pos_calculator)
-        
-        self.assertTrue(issubclass(pos_calculator_type, trilaterate.PositionCalculator))
 
     
     def test_givenNewTag_thenEmptyManyDistToAnchorAndAnchor(self):
@@ -232,14 +225,14 @@ class TestRoom(unittest.TestCase):
         
         
     def test_givenManyObserverHasObserver_whenUpdateOrUpsertSuccessful_thenObserverIsNotified(self):
-        tag_pos_pub = room.TagPositionPublisher()
-        self.room.add_observer(tag_pos_pub)
+        mock_observer = room.MockRoomObserver()
+        self.room.add_observer(mock_observer)
         
-        initial_notify_count = tag_pos_pub.get_notify_count()
+        initial_notify_count = mock_observer.get_notify_count()
         self.room.upsert_anchor_position("1000", trilaterate.Position(0, 0, 0))
-        notify_count_A = tag_pos_pub.get_notify_count()
+        notify_count_A = mock_observer.get_notify_count()
         self.room.upsert_tag_to_anchor_dist("2000", "1000", 3.2)
-        notify_count_B = tag_pos_pub.get_notify_count()
+        notify_count_B = mock_observer.get_notify_count()
 
         self.assertEqual(initial_notify_count + 1, notify_count_A)
         self.assertEqual(notify_count_A + 1, notify_count_B)
@@ -399,7 +392,7 @@ class TestTagToJSONStringConverter(unittest.TestCase):
     def test_givenTagWithNullPosition_whenGetJSONfromTag_thenRaiseTagHasNullPositionException(self):
         tag = room.Tag("2000")
         
-        self.assertRaises(room.TagToJSONStringConverter.TagHasNullPositionException, self.converter.get_JSON, tag)
+        self.assertRaises(room.TagToJSONStringConverter.UnableToGetTagPositionException, self.converter.get_JSON, tag)
         
         
     def test_givenTagWithValidPosition_whenGetJSONFromTag_thenReturnStringInJSONformat(self):
@@ -514,8 +507,7 @@ class TestMockMessageBroker(unittest.TestCase):
         self.mock_msg_broker.on_message("hello")
 
         self.assertTrue(simple_callback.is_called)
-
-        
+  
         
 class TestRoomRangeUpdater(unittest.TestCase):
 
@@ -576,6 +568,27 @@ class TestRoomRangeUpdater(unittest.TestCase):
         self.assertEqual(dist, 420)
         
 
+class TestMockRoomObserver(unittest.TestCase):
+
+    
+    def setUp(self):
+        self.mock_observer = room.MockRoomObserver()
+
+
+    def test_givenNew_whenGetNotifyCount_thenNotifyCountIsZero(self):
+        returned_notify_count = self.mock_observer.get_notify_count()
+
+        self.assertEqual(returned_notify_count, 0)
+
+
+    def test_givenRoom_whenNotify_thenNotifyCountIncremented(self):
+        r = room.Room()
+
+        self.mock_observer.notify(r)
+
+        self.assertEqual(self.mock_observer.get_notify_count(), 1)
+    
+    
 
 
         

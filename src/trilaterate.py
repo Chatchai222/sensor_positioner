@@ -88,56 +88,9 @@ class Position:
 
     def __eq__(self, other):
         return self._x == other.get_x() and self._y == other.get_y() and self._z == other.get_z()
-    
-
-class NullPosition(Position):
 
 
-    def __init__(self):
-        pass
-
-
-    def is_null(self):
-        return True
-    
-
-    def to_string(self):
-        return "null position"
-    
-
-    def set_x(self, x: float):
-        raise NotImplementedError
-    
-
-    def set_y(self, y: float):
-        raise NotImplementedError
-
-
-    def set_z(self, z: float):
-        raise NotImplementedError
-
-
-    def get_x(self) -> float:
-        raise NotImplementedError
-    
-
-    def get_y(self) -> float:
-        raise NotImplementedError
-    
-
-    def get_z(self) -> float:
-        raise NotImplementedError
-
-
-class PositionCalculator(abc.ABC):
-
-
-    @abc.abstractmethod
-    def get_position_or_null_position(self, many_tag_dist_to_anchor) -> Position:
-        raise NotImplementedError
-    
-
-class FarAxisOrigin2DPositionCalculator(PositionCalculator):
+class FarAxisOrigin2DPositionCalculator:
     """
     dist_to_anchor = [
         [3.24, Position(0, 0, 0)],
@@ -150,18 +103,10 @@ class FarAxisOrigin2DPositionCalculator(PositionCalculator):
         pass
 
     
-    def get_position_or_null_position(self, many_tag_dist_to_anchor_pos) -> Position:
-        try:
-            return self._get_position(many_tag_dist_to_anchor_pos)
-        except Exception as e:
-            print(e)
-            return NullPosition()
-        
-
-    def _get_position(self, many_tag_dist_and_anchor_pos) -> Position:
-        tag_dist_to_origin_pos, origin_pos = self._get_tag_dist_to_origin_and_origin_pos(many_tag_dist_and_anchor_pos)
-        tag_dist_to_far_x_pos, far_x_pos = self._get_tag_dist_to_far_x_and_far_x_pos(many_tag_dist_and_anchor_pos)
-        tag_dist_to_far_y_pos, far_y_pos = self._get_tag_dist_to_far_y_and_far_y_pos(many_tag_dist_and_anchor_pos)
+    def get_position(self, many_tag_dist_to_anchor_pos) -> Position:
+        tag_dist_to_origin_pos, origin_pos = self._get_tag_dist_to_origin_and_origin_pos(many_tag_dist_to_anchor_pos)
+        tag_dist_to_far_x_pos, far_x_pos = self._get_tag_dist_to_far_x_and_far_x_pos(many_tag_dist_to_anchor_pos)
+        tag_dist_to_far_y_pos, far_y_pos = self._get_tag_dist_to_far_y_and_far_y_pos(many_tag_dist_to_anchor_pos)
 
         origin_dist_to_far_x = origin_pos.get_dist_to(far_x_pos)
         origin_dist_to_far_y = origin_pos.get_dist_to(far_y_pos)
@@ -178,25 +123,23 @@ class FarAxisOrigin2DPositionCalculator(PositionCalculator):
             if anchor_pos == Position(0, 0, 0):
                 return tag_dist, anchor_pos
             
-        raise Exception("Tag distance and anchor pos don't have origin anchor")
+        raise self.__class__.MissingOriginPositionException
     
 
     def _get_tag_dist_to_far_x_and_far_x_pos(self, many_tag_dist_and_anchor_pos):
-        origin = Position(0, 0, 0)
         for tag_dist, anchor_pos in many_tag_dist_and_anchor_pos:
-            if origin.is_x_orthogonal(anchor_pos) and anchor_pos.get_x() != 0:
+            if anchor_pos.get_x() != 0 and anchor_pos.get_y() == 0 and anchor_pos.get_z() == 0:
                 return tag_dist, anchor_pos
             
-        raise Exception("Tag distance and anchor pos don't have far x anchor")
+        raise self.__class__.MissingFarXPositionException
     
 
     def _get_tag_dist_to_far_y_and_far_y_pos(self, many_tag_dist_and_anchor_pos):
-        origin = Position(0, 0, 0)
         for tag_dist, anchor_pos in many_tag_dist_and_anchor_pos:
-            if origin.is_y_orthogonal(anchor_pos) and anchor_pos.get_y() != 0:
+            if anchor_pos.get_x() == 0 and anchor_pos.get_y() != 0 and anchor_pos.get_z() == 0:
                 return tag_dist, anchor_pos
             
-        raise Exception("Tag distance and anchor pos don't have far y anchor")
+        raise self.__class__.MissingFarYPositionException
 
 
     def _get_single_axis_coordinate(self, origin_dist_to_far_axis, tag_dist_to_origin, tag_dist_to_far_axis) -> float:
@@ -206,3 +149,15 @@ class FarAxisOrigin2DPositionCalculator(PositionCalculator):
 
         coord = ( (tf * tf) - (to * to) - (of * of) ) / (-2 * of)
         return coord
+
+
+    class MissingOriginPositionException(Exception):
+        pass
+
+
+    class MissingFarXPositionException(Exception):
+        pass
+
+
+    class MissingFarYPositionException(Exception):
+        pass
