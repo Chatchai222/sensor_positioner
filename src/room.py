@@ -6,32 +6,32 @@ class Anchor:
     
 
     def __init__(self, id: str, pos: trilaterate.Position):
-        self._id = id
-        self._name = "AnchorSensor_stud_name"
-        self._pos = pos
+        self._id: str = id
+        self._name: str = "AnchorSensor_stud_name"
+        self._pos: trilaterate.Position = pos
 
 
-    def __eq__(self, other_pos):
-        return self._id == other_pos.get_id()
+    def __eq__(self, other_anchor):
+        return self._id == other_anchor.get_id()
     
 
     def __repr__(self):
         return f"id: {self._id}, name: {self._name}, pos: {self._pos}"
         
 
-    def is_equal(self, other_anchor):
+    def is_equal(self, other_anchor) -> bool:
         return self._id == other_anchor.get_id()
 
 
-    def get_id(self):
+    def get_id(self) -> str:
         return self._id
 
 
-    def get_name(self):
+    def get_name(self) -> str:
         return self._name
     
 
-    def get_position(self):
+    def get_position(self) -> trilaterate.Position:
         return self._pos
     
 
@@ -50,12 +50,12 @@ class Tag:
 
 
     def __init__(self, id: str):
-        self._id = id
-        self._name = "TagSensor_stud_name"
-        self._many_dist_to_anchor_and_anchor = []
+        self._id: str = id
+        self._name: str = "TagSensor_stud_name"
+        self._many_dist_to_anchor_and_anchor: list = []
 
 
-    def get_id(self):
+    def get_id(self) -> str:
         return self._id
 
 
@@ -67,12 +67,12 @@ class Tag:
         self._name = in_name
 
 
-    def get_many_dist_to_anchor_and_anchor(self):
+    def get_many_dist_to_anchor_and_anchor(self) -> list:
         return self._many_dist_to_anchor_and_anchor
     
 
     def upsert_dist_to_anchor_and_anchor(self, in_dist_to_anchor: float, in_anchor: Anchor):
-        is_dist_updated = False
+        is_dist_updated: bool = False
         for i in range(len(self._many_dist_to_anchor_and_anchor)):
             _, anchor = self._many_dist_to_anchor_and_anchor[i]
             if anchor.is_equal(in_anchor):
@@ -84,7 +84,7 @@ class Tag:
             self._many_dist_to_anchor_and_anchor.append([in_dist_to_anchor, in_anchor])  
             
 
-    def get_position(self):
+    def get_position(self) -> trilaterate.Position:
         many_dist_to_anchor_and_anchor_pos = []
         for dist, anchor in self._many_dist_to_anchor_and_anchor:
             many_dist_to_anchor_and_anchor_pos.append( [dist, anchor.get_position()])
@@ -107,7 +107,7 @@ class AnchorCollection:
         self._many_anchor = []
 
     
-    def get_many_anchor(self):
+    def get_many_anchor(self) -> list:
         return self._many_anchor
 
 
