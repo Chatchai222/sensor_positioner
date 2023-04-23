@@ -423,7 +423,7 @@ class TestTagToJSONStringConverter(unittest.TestCase):
         tag_z_pos = tag_pos.get_z()
 
 
-        self.assertEqual(json_string, f"\"source\": \"2000\", \"x\": {tag_x_pos}, \"y\": {tag_y_pos}, \"z\": {tag_z_pos}")
+        self.assertEqual(json_string, f"{{\"source\": \"2000\", \"x\": {tag_x_pos:.3f}, \"y\": {tag_y_pos:.3f}, \"z\": {tag_z_pos:.3f}}}")
         
 
 class TestTagPositionPublisher(unittest.TestCase):
@@ -457,7 +457,7 @@ class TestTagPositionPublisher(unittest.TestCase):
         string_publisher = tag_pos_pub.get_message_broker()
         published_string = string_publisher.get_recent_publish()
         
-        expected_string = f"\"source\": \"2000\", \"x\": 0.5, \"y\": 0.5, \"z\": 0"
+        expected_string = f"{{\"source\": \"2000\", \"x\": 0.500, \"y\": 0.500, \"z\": 0.000}}"
         self.assertEqual(published_string, expected_string)
 
 
@@ -526,6 +526,16 @@ class TestRoomRangeUpdater(unittest.TestCase):
         self.assertIs(r, returned_room)
 
 
+    def test_givenMessageBroker_whenInitialize_thenOnMessageCallbackIsSet(self):
+        r = room.Room()
+        msg_broker = room.MockMessageBroker()
+
+        range_updater = room.RoomRangeUpdater(r, msg_broker)
+
+        returned_callback = msg_broker.get_on_message_callback()
+        self.assertIsNotNone(returned_callback)
+
+
     def test_givenHasRoom_whenUpdateRoom_thenRoomIsUpdated(self):
         message = "{\"source\": \"2000\", \"destination\": \"1000\", \"range\": \"69\"}"
         
@@ -565,6 +575,8 @@ class TestRoomRangeUpdater(unittest.TestCase):
                 break
 
         self.assertEqual(dist, 420)
+
+
         
 
 class TestMockRoomObserver(unittest.TestCase):

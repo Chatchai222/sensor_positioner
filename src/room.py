@@ -255,6 +255,7 @@ class Room:
 
 class TagToJSONStringConverter:
     
+
     def __init__(self):
         pass
 
@@ -271,7 +272,7 @@ class TagToJSONStringConverter:
         y_pos = tag_pos.get_y()
         z_pos = tag_pos.get_z()
 
-        return f"\"source\": \"{tag_id}\", \"x\": {x_pos}, \"y\": {y_pos}, \"z\": {z_pos}"
+        return f"{{\"source\": \"{tag_id}\", \"x\": {x_pos:.3f}, \"y\": {y_pos:.3f}, \"z\": {z_pos:.3f}}}"
 
 
     class UnableToGetTagPositionException(Exception):
@@ -357,7 +358,7 @@ class RoomRangeUpdater:
 
     def __init__(self, in_room: Room, in_message_broker=MockMessageBroker()):
         self._room = in_room
-        self._message_broker = in_message_broker
+        self.set_message_broker(in_message_broker)
 
 
     def get_room(self) -> Room:
