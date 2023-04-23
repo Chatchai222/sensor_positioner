@@ -236,8 +236,7 @@ class TestRoom(unittest.TestCase):
 
         self.assertEqual(initial_notify_count + 1, notify_count_A)
         self.assertEqual(notify_count_A + 1, notify_count_B)
-
-        
+      
 
     def test_givenNewRoom_whenPopulateWithDefaultAnchorAndTag_thenRoomHasDefaultAnchorAndTag(self):
         origin = room.Anchor("1000", trilaterate.Position(0, 0, 0))

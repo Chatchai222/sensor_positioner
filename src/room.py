@@ -324,7 +324,7 @@ class TagPositionPublisher:
             try:
                 json_string = self._tag_to_string_converter.get_JSON(each_tag)
                 self._message_broker.publish(json_string)
-            except self._tag_to_string_converter.__class__.TagHasNullPositionException:
+            except self._tag_to_string_converter.__class__.UnableToGetTagPositionException:
                 pass
 
 
