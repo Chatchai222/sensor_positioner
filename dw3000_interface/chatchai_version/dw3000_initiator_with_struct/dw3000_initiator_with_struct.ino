@@ -30,8 +30,8 @@ const uint8_t PIN_SLAVE_SELECT = 4;
 const char* NETWORK_NAME = "ASUS_for_ICT";
 const char* NETWORK_PASSWORD = "ictadmin";
 
-const char* UDP_ADDRESS = "192.168.4.154";
-const int UDP_PORT = 5005;
+const char* UDP_ADDRESS = "192.168.4.33";
+const int UDP_PORT = 8888;
 
 bool connected = false;
 
@@ -76,7 +76,7 @@ void publish_to_UDP(struct Initiator* initiator_ptr, struct Responder* responder
         uint16_t responder_id = responder_get_id(responder_ptr);
         
         udp.beginPacket(UDP_ADDRESS, UDP_PORT);
-        udp.printf("{ \"source\": \"%u\", \"destination\": \"%u\", \"range\": \"%lf\" }", initiator_id, responder_id, distance);
+        udp.printf("{ \"source\": \"%u\", \"destination\": \"%u\", \"range\": %lf }", initiator_id, responder_id, distance);
         udp.endPacket();
         Serial.println("Sent UDP packet");
     } else {
