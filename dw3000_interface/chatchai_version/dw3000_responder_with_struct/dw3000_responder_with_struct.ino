@@ -368,6 +368,7 @@ void wait_for_poll_message_and_transmit_back_response_message(){
     if (!(status_reg & SYS_STATUS_RXFCG_BIT_MASK)){ // if not receive frame control good
         /* Clear RX error events in the DW IC status register. clear receive frame error from status register */
         dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_ALL_RX_ERR);
+        Serial.println("wait_poll_transmit_response error: Not receive frame control good");
         return;
     }
 
@@ -377,6 +378,12 @@ void wait_for_poll_message_and_transmit_back_response_message(){
 
     bool is_write_rx_buffer_to_poll_message_success = _write_rx_buffer_to_poll_message();
     if (!is_write_rx_buffer_to_poll_message_success){
+        Serial.println("wait_poll_transmit_response error: Failed to write rx buffer to poll message");
+        return;
+    }
+
+    if (!_is_poll_message_destination_match_responder_id()){
+        Serial.println("wait_poll_transmit_response error: Poll message destination don't match responder id");
         return;
     }
 
@@ -384,6 +391,7 @@ void wait_for_poll_message_and_transmit_back_response_message(){
     
     int dwt_status = _transmit_response_message();
     if (dwt_status != DWT_SUCCESS){
+        Serial.println("wait_poll_transmit_response error: transmit response message failed");
         return;
     }
 
@@ -394,6 +402,7 @@ void wait_for_poll_message_and_transmit_back_response_message(){
     dwt_write32bitreg(SYS_STATUS_ID, SYS_STATUS_TXFRS_BIT_MASK);
 
     ResponseMessage_increment_frame_sequence_number();
+    Serial.println("wait_poll_transmit_response: success!!");
     
 }
 
@@ -413,6 +422,11 @@ bool _write_rx_buffer_to_poll_message(){
     dwt_readrxdata(PollMessage_get_array(), frame_len, 0);
 
     return is_operation_success;
+}
+
+bool _is_poll_message_destination_match_responder_id(){
+    uint16_t poll_msg_dest_addr = PollMessage_get_destination_address();
+    return RESPONDER_ID == poll_msg_dest_addr;
 }
 
 void _update_response_message_from_poll_message_and_timestamp(){
@@ -469,13 +483,12 @@ void setup(){
 
 void loop(){
     Serial.println("start main loop of responder with struct");
-    Serial.println("waiting for poll message");
 
     wait_for_poll_message_and_transmit_back_response_message();
+    PollMessage_print();
     ResponseMessage_print();
 
-    Serial.println("sent back the response message");
-    Serial.println("end main loop of responder with strcut");
+    Serial.println("end main loop of responder with struct");
     
     
 }
