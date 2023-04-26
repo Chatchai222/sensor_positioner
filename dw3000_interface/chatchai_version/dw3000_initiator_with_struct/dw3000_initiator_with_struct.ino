@@ -513,8 +513,8 @@ void DW3000Chip_initialize_for_initiator(){
 
 
 // Ranger
-const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 20;
-const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 100; 
+const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 10;
+const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 200; 
 
 double Ranger_get_distance_or_null(struct Initiator* initiator_ptr, struct Responder* responder_ptr){
     double distance;

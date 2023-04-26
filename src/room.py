@@ -199,8 +199,8 @@ class Room:
 
     def populate_with_default_anchor_and_tag(self):
         self.upsert_anchor_position("1000", trilaterate.Position(0, 0, 0))
-        self.upsert_anchor_position("1001", trilaterate.Position(0.5, 0, 0))
-        self.upsert_anchor_position("1002", trilaterate.Position(0, 0.5, 0))
+        self.upsert_anchor_position("1001", trilaterate.Position(0.7, 0, 0))
+        self.upsert_anchor_position("1002", trilaterate.Position(0, 0.7, 0))
 
         self.upsert_tag_to_anchor_dist("2000", "1000", math.sqrt(0.5))
         self.upsert_tag_to_anchor_dist("2000", "1001", 0.5)
@@ -325,8 +325,9 @@ class TagPositionPublisher:
             try:
                 json_string = self._tag_to_string_converter.get_JSON(each_tag)
                 self._message_broker.publish(json_string)
+                print(json_string)
             except self._tag_to_string_converter.__class__.UnableToGetTagPositionException:
-                pass
+                print("failed to publish tag position")
 
 
     def get_notify_count(self):
@@ -367,6 +368,7 @@ class RoomRangeUpdater:
 
     def update_room(self, in_str):
         msg_dict = json.loads(in_str)
+        print("update_room with ", msg_dict)
 
         tag_id = msg_dict["source"]
         anchor_id = msg_dict["destination"]
