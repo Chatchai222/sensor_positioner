@@ -125,12 +125,10 @@ void responder_print(struct Responder *self){
 
 // RoundRobinResponder
 
-#define _RESPONDER_ARRAY_SIZE 3
+#define _RESPONDER_ARRAY_SIZE 1
 int _RoundRobinResponder_current_index = 0;
 struct Responder _responder_array[_RESPONDER_ARRAY_SIZE] = {
-    {._id = 1000, ._frame_sequence_number = 0},
     {._id = 1001, ._frame_sequence_number = 0},
-    {._id = 1002, ._frame_sequence_number = 0},
 };
 
 void RoundRobinResponder_increment_index(){
@@ -513,13 +511,17 @@ void DW3000Chip_initialize_for_initiator(){
 
 
 // Ranger
-const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 10;
-const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 200; 
+const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 5000;
+const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 1;
+int _Ranger_ranging_attempt_count = 0;
+
+int Ranger_get_recent_ranging_attempt_count(){
+    return _Ranger_ranging_attempt_count;
+}
 
 double Ranger_get_distance_or_null(struct Initiator* initiator_ptr, struct Responder* responder_ptr){
     double distance;
-    int i;
-    for (i = 0; i < _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP; i++){
+    for (_Ranger_ranging_attempt_count = 0; _Ranger_ranging_attempt_count < _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP; _Ranger_ranging_attempt_count++){
         distance = Ranger_single_attempt_get_distance_or_null(initiator_ptr, responder_ptr);
         if (distance != NULL){
             break;
@@ -722,14 +724,14 @@ void my_debug() {
 void setup() {
     // put your setup code here, to run once:
     DW3000Chip_initialize_for_initiator();
-    connect_to_wifi(NETWORK_NAME, NETWORK_PASSWORD);
+    //connect_to_wifi(NETWORK_NAME, NETWORK_PASSWORD);
     
     
 }
 
 void loop() {
     // put your main code here, to run repeatedly:
-    Serial.println("Start of loop initiator with struct");
+    //Serial.println("Start of loop initiator with struct");
 
     struct Initiator initiator;
     initiator_initialize(&initiator, INITIATOR_ID);
@@ -742,14 +744,16 @@ void loop() {
     if (distance == NULL){
         Serial.println("ranger failed to get distance");
     } else {
-        Serial.print("distance is: "); Serial.println(distance);
-        publish_to_UDP(&initiator, responder_ptr, distance);
+        Serial.print(distance); Serial.print(","); Serial.println(Ranger_get_recent_ranging_attempt_count());
+        //Serial.print("distance: "); Serial.println(distance);
+        //Serial.print("ranging_attempt_count: "); Serial.println(Ranger_get_recent_ranging_attempt_count());
+        //publish_to_UDP(&initiator, responder_ptr, distance);
     }
-    initiator_print(&initiator);
-    responder_print(responder_ptr);
+    //initiator_print(&initiator);
+    //responder_print(responder_ptr);
     
-    Serial.println(String("wtf there is a string?"));
-    Serial.println("End of loop initiator with struct");
-    Sleep(200);
+    //Serial.println(String("wtf there is a string?"));
+    //Serial.println("End of loop initiator with struct");
+    Sleep(100);
 
 }
