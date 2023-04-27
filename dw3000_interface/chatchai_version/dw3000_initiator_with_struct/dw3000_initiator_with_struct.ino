@@ -754,6 +754,6 @@ void loop() {
     
     //Serial.println(String("wtf there is a string?"));
     //Serial.println("End of loop initiator with struct");
-    Sleep(100);
+    Sleep(10);
 
 }
