@@ -513,8 +513,8 @@ void DW3000Chip_initialize_for_initiator(){
 
 
 // Ranger
-const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 10;
-const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 200; 
+const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 1000;
+const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 1; 
 
 double Ranger_get_distance_or_null(struct Initiator* initiator_ptr, struct Responder* responder_ptr){
     double distance;
@@ -526,6 +526,7 @@ double Ranger_get_distance_or_null(struct Initiator* initiator_ptr, struct Respo
         }
         Sleep(_Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND);
     }
+    Serial.print("Ranging attempt before sucessful: "); Serial.println(i); 
 
     return distance;
 }
@@ -729,7 +730,7 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    Serial.println("Start of loop initiator with struct");
+    //Serial.println("Start of loop initiator with struct");
 
     struct Initiator initiator;
     initiator_initialize(&initiator, INITIATOR_ID);
@@ -743,13 +744,13 @@ void loop() {
         Serial.println("ranger failed to get distance");
     } else {
         Serial.print("distance is: "); Serial.println(distance);
-        publish_to_UDP(&initiator, responder_ptr, distance);
+        //publish_to_UDP(&initiator, responder_ptr, distance);
     }
-    initiator_print(&initiator);
-    responder_print(responder_ptr);
+    //initiator_print(&initiator);
+    //responder_print(responder_ptr);
     
-    Serial.println(String("wtf there is a string?"));
-    Serial.println("End of loop initiator with struct");
+    //Serial.println(String("wtf there is a string?"));
+    //Serial.println("End of loop initiator with struct");
     Sleep(200);
 
 }
