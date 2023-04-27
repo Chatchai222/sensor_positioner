@@ -730,7 +730,7 @@ void setup() {
 
 void loop() {
     // put your main code here, to run repeatedly:
-    //Serial.println("Start of loop initiator with struct");
+    Serial.println("Start of loop initiator with struct");
 
     struct Initiator initiator;
     initiator_initialize(&initiator, INITIATOR_ID);
@@ -744,13 +744,13 @@ void loop() {
         Serial.println("ranger failed to get distance");
     } else {
         Serial.print("distance is: "); Serial.println(distance);
-        //publish_to_UDP(&initiator, responder_ptr, distance);
+        publish_to_UDP(&initiator, responder_ptr, distance);
     }
-    //initiator_print(&initiator);
-    //responder_print(responder_ptr);
+    initiator_print(&initiator);
+    responder_print(responder_ptr);
     
-    //Serial.println(String("wtf there is a string?"));
-    //Serial.println("End of loop initiator with struct");
+    Serial.println(String("wtf there is a string?"));
+    Serial.println("End of loop initiator with struct");
     Sleep(200);
 
 }
