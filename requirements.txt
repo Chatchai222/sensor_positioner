@@ -1,1 +1,7 @@
+async-timeout==4.0.2
+future==0.18.3
+iso8601==1.1.0
 paho-mqtt==1.6.1
+pyserial==3.5
+PyYAML==6.0
+redis==4.5.4

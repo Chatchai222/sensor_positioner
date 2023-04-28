@@ -1,0 +1,5 @@
+This folder contains the analysis
+of accuracy and precision of the DW3000,
+it will likely contain the data from the serial port
+from connecting to MakerFabs ESP32 DW3000 
+
