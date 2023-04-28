@@ -512,7 +512,7 @@ void DW3000Chip_initialize_for_initiator(){
 
 // Ranger
 const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 5000;
-const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 1;
+const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 0;
 int _Ranger_ranging_attempt_count = 0;
 
 int Ranger_get_recent_ranging_attempt_count(){
@@ -754,6 +754,6 @@ void loop() {
     
     //Serial.println(String("wtf there is a string?"));
     //Serial.println("End of loop initiator with struct");
-    Sleep(10);
+    Sleep(1);
 
 }
