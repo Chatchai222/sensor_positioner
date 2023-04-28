@@ -513,8 +513,8 @@ void DW3000Chip_initialize_for_initiator(){
 
 
 // Ranger
-const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 1000;
-const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 5;
+const int _Ranger_MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP = 5000;
+const uint32_t _Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND = 0;
 int _Ranger_ranging_attempt_count = 0;
 
 int Ranger_get_recent_ranging_attempt_count(){
