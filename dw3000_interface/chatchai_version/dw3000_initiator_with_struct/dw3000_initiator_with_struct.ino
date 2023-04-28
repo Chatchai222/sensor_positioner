@@ -530,7 +530,6 @@ double Ranger_get_distance_or_null(struct Initiator* initiator_ptr, struct Respo
         }
         Sleep(_Ranger_DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND);
     }
-    Serial.print("Ranging attempt before sucessful: "); Serial.println(i); 
 
     return distance;
 }
