@@ -125,10 +125,12 @@ void responder_print(struct Responder *self){
 
 // RoundRobinResponder
 
-#define _RESPONDER_ARRAY_SIZE 1
+#define _RESPONDER_ARRAY_SIZE 3
 int _RoundRobinResponder_current_index = 0;
 struct Responder _responder_array[_RESPONDER_ARRAY_SIZE] = {
+    {._id = 1000, ._frame_sequence_number = 0},
     {._id = 1001, ._frame_sequence_number = 0},
+    {._id = 1002, ._frame_sequence_number = 0},
 };
 
 void RoundRobinResponder_increment_index(){
@@ -744,7 +746,6 @@ void loop() {
     if (distance == NULL){
         Serial.println("ranger failed to get distance");
     } else {
-        Serial.print(distance); Serial.print(","); Serial.println(Ranger_get_recent_ranging_attempt_count());
         Serial.print("distance: "); Serial.println(distance);
         Serial.print("ranging_attempt_count: "); Serial.println(Ranger_get_recent_ranging_attempt_count());
         publish_to_UDP(&initiator, responder_ptr, distance);
