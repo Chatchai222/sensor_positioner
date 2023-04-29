@@ -1,8 +1,14 @@
 import unittest
 import room_model
+import app
 
 class TestApp(unittest.TestCase):
-    
+
+
+    def test_canInitialize(self):
+        trilateration_app = app.PositionerApp()
+
+
 
     def test_givenAnchorAndTagRange_whenAppRunning_thenPublishPosition(self):
         message_broker = room_model.MockMessageBroker()
