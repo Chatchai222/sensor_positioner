@@ -1,14 +1,14 @@
 import unittest
-import room
+import room_model
 
 class TestApp(unittest.TestCase):
     
 
     def test_givenAnchorAndTagRange_whenAppRunning_thenPublishPosition(self):
-        message_broker = room.MockMessageBroker()
-        r = room.Room()
-        tag_pos_publisher = room.TagPositionPublisher(message_broker)
-        room_range_updater = room.RoomRangeUpdater(r, message_broker)
+        message_broker = room_model.MockMessageBroker()
+        r = room_model.Room()
+        tag_pos_publisher = room_model.TagPositionPublisher(message_broker)
+        room_range_updater = room_model.RoomRangeUpdater(r, message_broker)
         r.add_observer(tag_pos_publisher)
         r.populate_with_default_anchor_and_tag()
 
