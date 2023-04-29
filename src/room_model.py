@@ -1,4 +1,4 @@
-import trilaterate
+import trilaterate_algorithm
 import math
 import json
 import abc
@@ -6,10 +6,10 @@ import abc
 class Anchor:
     
 
-    def __init__(self, id: str, pos: trilaterate.Position):
+    def __init__(self, id: str, pos: trilaterate_algorithm.Position):
         self._id: str = id
         self._name: str = "AnchorSensor_stud_name"
-        self._pos: trilaterate.Position = pos
+        self._pos: trilaterate_algorithm.Position = pos
 
 
     def __eq__(self, other_anchor):
@@ -32,7 +32,7 @@ class Anchor:
         return self._name
     
 
-    def get_position(self) -> trilaterate.Position:
+    def get_position(self) -> trilaterate_algorithm.Position:
         return self._pos
     
 
@@ -40,14 +40,14 @@ class Anchor:
         self._name = in_name
 
 
-    def set_position(self, in_pos: trilaterate.Position):
+    def set_position(self, in_pos: trilaterate_algorithm.Position):
         self._pos = in_pos
 
 
 class Tag:
     
 
-    _pos_calculator = trilaterate.FarAxisOrigin2DPositionCalculator()
+    _pos_calculator = trilaterate_algorithm.FarAxisOrigin2DPositionCalculator()
 
 
     def __init__(self, id: str):
@@ -85,7 +85,7 @@ class Tag:
             self._many_dist_to_anchor_and_anchor.append([in_dist_to_anchor, in_anchor])  
             
 
-    def get_position(self) -> trilaterate.Position:
+    def get_position(self) -> trilaterate_algorithm.Position:
         many_dist_to_anchor_and_anchor_pos = []
         for dist, anchor in self._many_dist_to_anchor_and_anchor:
             many_dist_to_anchor_and_anchor_pos.append( [dist, anchor.get_position()])
@@ -199,9 +199,9 @@ class Room:
 
 
     def populate_with_default_anchor_and_tag(self):
-        self.upsert_anchor_position("1000", trilaterate.Position(0, 0, 0))
-        self.upsert_anchor_position("1001", trilaterate.Position(0.5, 0, 0))
-        self.upsert_anchor_position("1002", trilaterate.Position(0, 0.5, 0))
+        self.upsert_anchor_position("1000", trilaterate_algorithm.Position(0, 0, 0))
+        self.upsert_anchor_position("1001", trilaterate_algorithm.Position(0.5, 0, 0))
+        self.upsert_anchor_position("1002", trilaterate_algorithm.Position(0, 0.5, 0))
 
         self.upsert_tag_to_anchor_dist("2000", "1000", math.sqrt(0.5))
         self.upsert_tag_to_anchor_dist("2000", "1001", 0.5)
@@ -212,7 +212,7 @@ class Room:
         return self._anchor_collection.get_many_anchor()
     
     
-    def upsert_anchor_position(self, in_anchor_id: str, in_anchor_pos: trilaterate.Position):
+    def upsert_anchor_position(self, in_anchor_id: str, in_anchor_pos: trilaterate_algorithm.Position):
         try:
             self._anchor_collection.update_anchor_position(in_anchor_id, in_anchor_pos)
         except AnchorCollection.UpdateNonexistentAnchorIdException:
