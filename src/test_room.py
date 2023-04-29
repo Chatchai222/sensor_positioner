@@ -257,8 +257,6 @@ class TestRoom(unittest.TestCase):
         self.assertTrue(tag_pos.is_almost_equal(returned_tag_pos))
 
         
-
-        
 class TestAnchorCollection(unittest.TestCase):
     
 
@@ -577,7 +575,6 @@ class TestRoomRangeUpdater(unittest.TestCase):
         self.assertEqual(dist, 420)
 
 
-        
 
 class TestMockRoomObserver(unittest.TestCase):
 
@@ -599,12 +596,6 @@ class TestMockRoomObserver(unittest.TestCase):
 
         self.assertEqual(self.mock_observer.get_notify_count(), 1)
     
-    
-
-
-        
-
-
 
 class TestGoldenBehaviour(unittest.TestCase):
     

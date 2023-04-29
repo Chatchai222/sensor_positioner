@@ -199,8 +199,8 @@ class Room:
 
     def populate_with_default_anchor_and_tag(self):
         self.upsert_anchor_position("1000", trilaterate.Position(0, 0, 0))
-        self.upsert_anchor_position("1001", trilaterate.Position(0.7, 0, 0))
-        self.upsert_anchor_position("1002", trilaterate.Position(0, 0.7, 0))
+        self.upsert_anchor_position("1001", trilaterate.Position(0.5, 0, 0))
+        self.upsert_anchor_position("1002", trilaterate.Position(0, 0.5, 0))
 
         self.upsert_tag_to_anchor_dist("2000", "1000", math.sqrt(0.5))
         self.upsert_tag_to_anchor_dist("2000", "1001", 0.5)
