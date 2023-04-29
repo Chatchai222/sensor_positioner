@@ -1,9 +1,8 @@
 import room_model
-import redis_message_broker
 
 def main():
     print("Setting up the trilateration program")
-    redis_msg_broker = redis_message_broker.RedisMessageBroker("192.168.4.33", auth="ictadmin")
+    redis_msg_broker = room_model.RedisMessageBroker("192.168.4.33", auth="ictadmin")
     r = room_model.Room()
     tag_pos_pub = room_model.TagPositionPublisher(redis_msg_broker)
     room_range_updater = room_model.RoomRangeUpdater(r, redis_msg_broker)

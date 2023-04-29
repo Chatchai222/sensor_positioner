@@ -568,7 +568,14 @@ class TestMockMessageBroker(unittest.TestCase):
 
         self.assertTrue(simple_callback.is_called)
   
-        
+
+class TestRedisMessageBroker(unittest.TestCase):
+    
+    
+    def test_RedisMessageBroker_IsSubclassMessageBroker(self):
+        self.assertTrue(issubclass(room_model.RedisMessageBroker, room_model.MessageBroker))
+
+
 class TestRoomRangeUpdater(unittest.TestCase):
 
 

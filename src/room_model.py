@@ -323,7 +323,7 @@ class MockMessageBroker(MessageBroker):
             self._on_message_callback(in_message)
 
 
-class RedisMessageBroker:
+class RedisMessageBroker(MessageBroker):
     def __init__(self, hostname: str, port: int = 6379, auth: str = None):
         # Defining Class Variables
         self.PUBLISH_CHANNEL = "tag:motioncapture.coordinates"
