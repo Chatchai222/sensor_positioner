@@ -1,6 +1,7 @@
 import trilaterate
 import math
 import json
+import abc
 
 class Anchor:
     
@@ -308,7 +309,14 @@ class MockMessageBroker:
             self._on_message_callback(in_message)
         
 
-class TagPositionPublisher:
+class RoomObserver(abc.ABC):
+
+    @abc.abstractmethod
+    def notify(r: Room):
+        raise NotImplementedError
+
+
+class TagPositionPublisher(RoomObserver):
 
     
     def __init__(self, in_message_broker=MockMessageBroker()):
@@ -338,7 +346,7 @@ class TagPositionPublisher:
         return self._message_broker
 
 
-class MockRoomObserver:
+class MockRoomObserver(RoomObserver):
     
 
     def __init__(self):

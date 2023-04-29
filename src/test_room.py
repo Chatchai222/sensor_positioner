@@ -435,6 +435,10 @@ class TestTagPositionPublisher(unittest.TestCase):
         r = room.Room()
         self.position_publisher.notify(r)
 
+    
+    def test_givenNewInstance_whenCheckSubclass_thenIsSubclassRoomObserver(self):
+        self.assertTrue(issubclass(type(self.position_publisher), room.RoomObserver))
+
 
     def test_givenRoom_whenNotify_thenNotifyCountIncremented(self):
         r = room.Room()
@@ -575,12 +579,15 @@ class TestRoomRangeUpdater(unittest.TestCase):
         self.assertEqual(dist, 420)
 
 
-
 class TestMockRoomObserver(unittest.TestCase):
 
     
     def setUp(self):
         self.mock_observer = room.MockRoomObserver()
+
+    
+    def test_givenNewInstance_whenCheckSubclass_thenIsSubclassRoomObserver(self):
+        self.assertTrue(issubclass(type(self.mock_observer), room.RoomObserver))
 
 
     def test_givenNew_whenGetNotifyCount_thenNotifyCountIsZero(self):
