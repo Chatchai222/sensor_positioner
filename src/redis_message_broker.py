@@ -1,5 +1,5 @@
 from redis import Redis
-import time
+
 
 class RedisMessageBroker:
     def __init__(self, hostname: str, port: int = 6379, auth: str = None):

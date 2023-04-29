@@ -575,12 +575,14 @@ class TestRoomRangeUpdater(unittest.TestCase):
     def setUp(self):
         r = room_model.Room()
         r.populate_with_default_anchor_and_tag()
-        self.range_updater = room_model.RoomRangeUpdater(r)
+        mock_message_broker = room_model.MockMessageBroker()
+        self.range_updater = room_model.RoomRangeUpdater(r, mock_message_broker)
     
 
     def test_givenRoom_whenInitialize_thenHasRoom(self):
         r = room_model.Room()
-        range_updater = room_model.RoomRangeUpdater(r)
+        mock_message_broker = room_model.MockMessageBroker()
+        range_updater = room_model.RoomRangeUpdater(r, mock_message_broker)
         
         returned_room = range_updater.get_room()
 
