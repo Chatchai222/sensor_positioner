@@ -740,11 +740,16 @@ void loop() {
     responder_ptr = RoundRobinResponder_get_responder_ptr();
     RoundRobinResponder_increment_index();
 
+    long int t1 = millis();
     double distance = Ranger_get_distance_or_null(&initiator, responder_ptr);
+    long int t2 = millis();
+    long int time_of_op = t2 - t1; 
     if (distance == NULL){
         Serial.println("ranger failed to get distance");
     } else {
-        Serial.print(distance); Serial.print(","); Serial.println(Ranger_get_recent_ranging_attempt_count());
+        Serial.print(distance); Serial.print(","); 
+        Serial.print(Ranger_get_recent_ranging_attempt_count()); Serial.print(",");
+        Serial.print(time_of_op); Serial.println("");
         //Serial.print("distance: "); Serial.println(distance);
         //Serial.print("ranging_attempt_count: "); Serial.println(Ranger_get_recent_ranging_attempt_count());
         //publish_to_UDP(&initiator, responder_ptr, distance);
