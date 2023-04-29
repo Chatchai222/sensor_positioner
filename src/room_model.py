@@ -280,7 +280,20 @@ class TagToJSONStringConverter:
         pass
     
 
-class MockMessageBroker:
+class MessageBroker(abc.ABC):
+    
+
+    @abc.abstractmethod
+    def set_on_message_callback(callback):
+        raise NotImplementedError
+    
+
+    @abc.abstractmethod
+    def publish(in_message: str):
+        raise NotImplementedError
+
+
+class MockMessageBroker(MessageBroker):
     
 
     def __init__(self):

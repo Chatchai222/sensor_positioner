@@ -512,11 +512,32 @@ class TestTagPositionPublisher(unittest.TestCase):
         self.assertEqual("", published_string)
 
 
+class TestMessageBroker(unittest.TestCase):
+    
+
+    def test_givenMessageBroker_isAbstractClass(self):
+        self.assertTrue(issubclass(room_model.MessageBroker, abc.ABC))
+
+
+    def test_givenMessageBroker_canSetOnMessageCallback(self):
+        set_on_message_callback_method = getattr(room_model.MessageBroker, 'set_on_message_callback')
+        self.assertTrue(callable(set_on_message_callback_method))
+        
+
+    def test_givenMessageBroker_canPublish(self):
+        publish_method = getattr(room_model.MessageBroker, 'publish')
+        self.assertTrue(callable(publish_method))
+
+
 class TestMockMessageBroker(unittest.TestCase):
 
 
     def setUp(self):
         self.mock_msg_broker = room_model.MockMessageBroker()
+    
+    
+    def test_givenMockMessageBroker_whenCheckInstance_thenInstanceOfMessageBroker(self):
+        self.assertTrue(isinstance(self.mock_msg_broker, room_model.MessageBroker))
 
 
     def test_givenPublishStringX_whenGetPublished_thenReturnStringX(self):
