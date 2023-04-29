@@ -311,6 +311,7 @@ class MockMessageBroker:
 
 class RoomObserver(abc.ABC):
 
+
     @abc.abstractmethod
     def notify(r: Room):
         raise NotImplementedError

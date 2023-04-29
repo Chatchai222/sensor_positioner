@@ -1,5 +1,6 @@
 import unittest
 import math
+import abc
 
 import trilaterate
 import room
@@ -422,7 +423,44 @@ class TestTagToJSONStringConverter(unittest.TestCase):
 
 
         self.assertEqual(json_string, f"{{\"source\": \"2000\", \"x\": {tag_x_pos:.3f}, \"y\": {tag_y_pos:.3f}, \"z\": {tag_z_pos:.3f}}}")
-        
+
+
+class TestRoomObserver(unittest.TestCase):
+
+
+    def test_roomObserver_isAbstractClass(self):
+        self.assertTrue(issubclass(room.RoomObserver, abc.ABC))
+
+
+    def test_roomObserver_canBeNotifiedOfRoom(self):
+        notify_method = getattr(room.RoomObserver, 'notify')
+        self.assertTrue(callable(notify_method))
+
+
+class TestMockRoomObserver(unittest.TestCase):
+
+    
+    def setUp(self):
+        self.mock_observer = room.MockRoomObserver()
+
+    
+    def test_givenNewInstance_whenCheckSubclass_thenIsSubclassRoomObserver(self):
+        self.assertTrue(issubclass(type(self.mock_observer), room.RoomObserver))
+
+
+    def test_givenNew_whenGetNotifyCount_thenNotifyCountIsZero(self):
+        returned_notify_count = self.mock_observer.get_notify_count()
+
+        self.assertEqual(returned_notify_count, 0)
+
+
+    def test_givenRoom_whenNotify_thenNotifyCountIncremented(self):
+        r = room.Room()
+
+        self.mock_observer.notify(r)
+
+        self.assertEqual(self.mock_observer.get_notify_count(), 1)
+
 
 class TestTagPositionPublisher(unittest.TestCase):
     
@@ -473,7 +511,7 @@ class TestTagPositionPublisher(unittest.TestCase):
 
         self.assertEqual("", published_string)
 
-        
+
 class TestMockMessageBroker(unittest.TestCase):
 
 
@@ -578,31 +616,6 @@ class TestRoomRangeUpdater(unittest.TestCase):
 
         self.assertEqual(dist, 420)
 
-
-class TestMockRoomObserver(unittest.TestCase):
-
-    
-    def setUp(self):
-        self.mock_observer = room.MockRoomObserver()
-
-    
-    def test_givenNewInstance_whenCheckSubclass_thenIsSubclassRoomObserver(self):
-        self.assertTrue(issubclass(type(self.mock_observer), room.RoomObserver))
-
-
-    def test_givenNew_whenGetNotifyCount_thenNotifyCountIsZero(self):
-        returned_notify_count = self.mock_observer.get_notify_count()
-
-        self.assertEqual(returned_notify_count, 0)
-
-
-    def test_givenRoom_whenNotify_thenNotifyCountIncremented(self):
-        r = room.Room()
-
-        self.mock_observer.notify(r)
-
-        self.assertEqual(self.mock_observer.get_notify_count(), 1)
-    
 
 class TestGoldenBehaviour(unittest.TestCase):
     
