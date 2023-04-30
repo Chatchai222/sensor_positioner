@@ -409,6 +409,7 @@ class RoomRangeUpdater:
 
     def __init__(self, in_room: Room, in_message_broker):
         self._room = in_room
+        self._message_broker = in_message_broker
         self.set_message_broker(in_message_broker)
 
 
