@@ -9,7 +9,6 @@ class Anchor:
 
     def __init__(self, id: str, pos: trilaterate_algorithm.Position):
         self._id: str = id
-        self._name: str = "AnchorSensor_stud_name"
         self._pos: trilaterate_algorithm.Position = pos
 
 
@@ -18,7 +17,7 @@ class Anchor:
     
 
     def __repr__(self):
-        return f"id: {self._id}, name: {self._name}, pos: {self._pos}"
+        return f"id: {self._id}, pos: {self._pos}"
         
 
     def is_equal(self, other_anchor) -> bool:
@@ -29,16 +28,8 @@ class Anchor:
         return self._id
 
 
-    def get_name(self) -> str:
-        return self._name
-    
-
     def get_position(self) -> trilaterate_algorithm.Position:
         return self._pos
-    
-
-    def set_name(self, in_name: str):
-        self._name = in_name
 
 
     def set_position(self, in_pos: trilaterate_algorithm.Position):
@@ -53,20 +44,19 @@ class Tag:
 
     def __init__(self, id: str):
         self._id: str = id
-        self._name: str = "TagSensor_stud_name"
         self._many_dist_to_anchor_and_anchor: list = []
+
+    
+    def __eq__(self, other):
+        return self._id == other.get_id()
+    
+
+    def __repr__(self):
+        return f"id: {self._id}, many_dist_to_anchor_and_anchor: {self._many_dist_to_anchor_and_anchor}"
 
 
     def get_id(self) -> str:
         return self._id
-
-
-    def get_name(self) -> str:
-        return self._name
-    
-
-    def set_name(self, in_name: str):
-        self._name = in_name
 
 
     def get_many_dist_to_anchor_and_anchor(self) -> list:
@@ -92,14 +82,6 @@ class Tag:
             many_dist_to_anchor_and_anchor_pos.append( [dist, anchor.get_position()])
         
         return self.__class__._pos_calculator.get_position(many_dist_to_anchor_and_anchor_pos)
-    
-
-    def __eq__(self, other):
-        return self._id == other.get_id()
-    
-
-    def __repr__(self):
-        return f"id: {self._id}, name: {self._name}, many_dist_to_anchor_and_anchor: {self._many_dist_to_anchor_and_anchor}"
 
 
 class AnchorCollection:

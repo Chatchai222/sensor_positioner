@@ -17,15 +17,6 @@ class TestAnchor(unittest.TestCase):
         anchor_sensor = room_model.Anchor("1000", trilaterate_algorithm.Position(0, 22, 0))
 
 
-    def test_givenNewAnchor_thenNameIsEmpty(self):
-        self.assertEqual(self.anchor.get_name(), "AnchorSensor_stud_name")
-    
-
-    def test_canSetNameAndGetName(self):
-        self.anchor.set_name("myanchor")
-        self.assertEqual("myanchor", self.anchor.get_name())
-
-
     def test_canSetAndGetPosition(self):
         self.anchor.set_position(trilaterate_algorithm.Position(10, 20, 30))
         self.assertEqual(self.anchor.get_position(), trilaterate_algorithm.Position(10, 20, 30))
@@ -59,16 +50,6 @@ class TestTag(unittest.TestCase):
 
     def test_canInitializeWithId(self):
         tag_sensor = room_model.Tag("2000")
-    
-
-    def test_newTag_hasStudName(self):
-        self.assertEqual(self.tag.get_name(), "TagSensor_stud_name")
-    
-
-    def test_canSetAndGetName(self):
-        self.tag.set_name("mytag1")
-        
-        self.assertEqual(self.tag.get_name(), "mytag1")
 
     
     def test_givenNewTag_thenEmptyManyDistToAnchorAndAnchor(self):
