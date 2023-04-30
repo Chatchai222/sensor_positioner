@@ -1,12 +1,29 @@
 @startuml
 
 class Anchor {
-    get_id(): String
-    
-}
-class Tag
+    - id: str 
+    - pos: Position
 
-class AnchorCollection
+    + is_equal(): bool 
+    + get_id(): str 
+    + get_position(): Position 
+    + set_position(p: Position)
+}
+class Tag{
+    - id: str
+    - many_dist_to_anchor_and_anchor: list
+    
+    + get_id(): str
+    + get_many_dist_to_anchor_and_anchor(): list
+    + upsert_dist_to_anchor_and_anchor(d: float, a: Anchor)
+    + get_position(): Position
+}
+
+class AnchorCollection{
+    - many_anchor: list
+
+    get_many_anchor(): list
+    
 class TagCollection 
 
 class Room 
