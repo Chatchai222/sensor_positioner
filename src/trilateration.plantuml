@@ -1,0 +1,67 @@
+@startuml
+
+class Anchor {
+    get_id(): String
+    
+}
+class Tag
+
+class AnchorCollection
+class TagCollection 
+
+class Room 
+class TagToJSONStringConverter 
+
+abstract class MessageBroker
+class MockMessageBroker
+class RedisMessageBroker
+
+abstract class RoomObserver
+class TagPositionPublisher
+class MockRoomObserver
+
+class RoomRangeUpdater
+
+
+class Position 
+class FarAxisOrigin2DPositionCalculator
+
+
+class App
+
+
+Tag -- FarAxisOrigin2DPositionCalculator
+Tag -- Position
+
+Anchor -- Position
+
+AnchorCollection "1" *-- "many" Anchor
+TagCollection "1" *-- "many" Tag
+
+Room "1" *-- "1" AnchorCollection
+Room "1" *-- "1" TagCollection
+
+MessageBroker <|-- MockMessageBroker
+MessageBroker <|-- RedisMessageBroker
+
+RoomObserver <|-- TagPositionPublisher
+RoomObserver <|-- MockRoomObserver
+
+TagPositionPublisher *-- "1" MessageBroker
+TagPositionPublisher *-- "1" TagToJSONStringConverter
+
+RoomRangeUpdater *-- "1" MessageBroker
+RoomRangeUpdater *-- "1" Room
+
+App *-- "1" RoomRangeUpdater
+App *-- "1" Room
+App *-- "1" TagPositionPublisher
+
+
+
+
+
+
+
+
+@enduml
