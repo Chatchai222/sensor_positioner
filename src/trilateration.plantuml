@@ -97,12 +97,21 @@ class MockRoomObserver {
 
 class RoomRangeUpdater {
     - room: Room
+    - message_broker: MessageBroker
     
-    + RoomRangeUpdater(r: )
+    + RoomRangeUpdater(r: Room, mb: MessageBroker)
+    + get_room(): Room
+    + update_room(m: str): None
+    + set_message_broker(mb: MessageBroker): None
+    + get_message_broker(): MessageBroker
 }
 
 
-class Position 
+class Position {
+    - ROUND_TO_NEAREST_DECIMAL_DIGIT: int
+
+    Position(x: float, y: float, z: float)
+}
 class FarAxisOrigin2DPositionCalculator
 
 

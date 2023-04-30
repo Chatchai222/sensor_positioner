@@ -2,7 +2,7 @@ import math
 
 class Position:
     
-    
+
     _ROUND_TO_NEAREST_DECIMAL_DIGIT = 6
 
 
@@ -11,10 +11,6 @@ class Position:
         self._y = y
         self._z = z
 
-    
-    def is_null(self) -> bool:
-        return False
-        
 
     def is_almost_equal(self, other_pos, error_dist_threshold=0.001) -> bool:
         dist_diff = self.get_dist_to(other_pos)
