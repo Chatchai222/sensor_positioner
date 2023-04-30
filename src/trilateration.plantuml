@@ -111,11 +111,27 @@ class Position {
     - ROUND_TO_NEAREST_DECIMAL_DIGIT: int
 
     Position(x: float, y: float, z: float)
+    is_almost_equal(p: Position, err_threshold: float): bool
+    get_dist_to(p: Position): float
+    is_x_orthogonal(p: other_pos): float
+    is_y_orthogonal(p: other_pos): float
+    is_z_orthogonal(p: other_pos): float
+    to_string(): str
+    set_x(x: float): None
+    set_y(y: float): None
+    set_z(z: float): None
+    get_x(): float
+    get_y(): float
+    get_z(): float
 }
-class FarAxisOrigin2DPositionCalculator
+class FarAxisOrigin2DPositionCalculator {
+    + get_position(many_tag_dist_to_anchor_pos: list): Position
+}
 
 
-class App
+class App {
+    + main(): None
+}
 
 
 Tag -- FarAxisOrigin2DPositionCalculator
