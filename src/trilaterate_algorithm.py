@@ -2,6 +2,7 @@ import math
 
 class Position:
     
+    
     _ROUND_TO_NEAREST_DECIMAL_DIGIT = 6
 
 
