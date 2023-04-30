@@ -256,7 +256,7 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = trilaterate_algorithm.Position(10, 20, 30)
 
-        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_position(anchor_id, anchor_pos)
         many_anchor = self.anchor_collection.get_many_anchor()
         returned_anchor = many_anchor[0]
 
@@ -268,17 +268,17 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = trilaterate_algorithm.Position(10, 20, 30)
 
-        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_position(anchor_id, anchor_pos)
 
-        self.assertRaises(room_model.AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, anchor_pos )
-        self.assertRaises(room_model.AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_pos, anchor_id, trilaterate_algorithm.Position(6, 6, 6))
+        self.assertRaises(room_model.AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_position, anchor_id, anchor_pos )
+        self.assertRaises(room_model.AnchorCollection.InsertSameAnchorIdException, self.anchor_collection.insert_anchor_id_and_position, anchor_id, trilaterate_algorithm.Position(6, 6, 6))
 
 
     def test_givenAnchorIdAndPos_whenUpdateCollectionWithNoSameExistingAnchorId_thenRaiseException(self):
         anchor_id = "1000"
         anchor_pos = trilaterate_algorithm.Position(10, 20, 30)
         
-        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_position(anchor_id, anchor_pos)
         
         self.assertRaises(room_model.AnchorCollection.UpdateNonexistentAnchorIdException, self.anchor_collection.update_anchor_position, "666", trilaterate_algorithm.Position(10, 20, 30))
 
@@ -288,7 +288,7 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_pos = trilaterate_algorithm.Position(10, 20, 30)
         updated_pos = trilaterate_algorithm.Position(40, 50, 60)
         
-        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_position(anchor_id, anchor_pos)
         self.anchor_collection.update_anchor_position(anchor_id, updated_pos)
         returned_anchor = self.anchor_collection.get_anchor(anchor_id)
 
@@ -300,7 +300,7 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = trilaterate_algorithm.Position(10, 20, 30)
 
-        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_position(anchor_id, anchor_pos)
         
         self.assertRaises(room_model.AnchorCollection.GetNonexistentAnchorIdException, self.anchor_collection.get_anchor, "666")
 
@@ -309,7 +309,7 @@ class TestAnchorCollection(unittest.TestCase):
         anchor_id = "1000"
         anchor_pos = trilaterate_algorithm.Position(10, 20, 30)
         
-        self.anchor_collection.insert_anchor_id_and_pos(anchor_id, anchor_pos)
+        self.anchor_collection.insert_anchor_id_and_position(anchor_id, anchor_pos)
         returned_anchor = self.anchor_collection.get_anchor(anchor_id)
         
         self.assertEqual(returned_anchor.get_id(), anchor_id)

@@ -95,7 +95,7 @@ class AnchorCollection:
         return self._many_anchor
 
 
-    def insert_anchor_id_and_pos(self, in_anchor_id, in_anchor_pos):
+    def insert_anchor_id_and_position(self, in_anchor_id, in_anchor_pos):
         anchor = Anchor(in_anchor_id, in_anchor_pos)
         if anchor in self._many_anchor:
             raise self.__class__.InsertSameAnchorIdException("Insert anchor with same id")
@@ -199,7 +199,7 @@ class Room:
         try:
             self._anchor_collection.update_anchor_position(in_anchor_id, in_anchor_pos)
         except AnchorCollection.UpdateNonexistentAnchorIdException:
-            self._anchor_collection.insert_anchor_id_and_pos(in_anchor_id, in_anchor_pos)
+            self._anchor_collection.insert_anchor_id_and_position(in_anchor_id, in_anchor_pos)
 
         self.notify_observer()
      
