@@ -1,0 +1,47 @@
+@startuml
+struct PollMessage {
+    - poll_message_array: uint8_t[]
+
+    + get_frame_control(): uint16_t
+    + get_frame_sequence_number(): uint8_t
+    + set_frame_sequence_number()
+    + increment_frame_sequence_number()
+    + get_persona_area_network_id()
+    + get_destination_address(): uint16_t
+    + set_destination_address(a: uint16_t)
+    + get_source_address(): uint16_t
+    + set_source_address(a: uint16_t)
+    + get_function_code(): uint8_t
+    + get_array_sizeof(): uint16_t
+    + get_array(): uint8_t*
+    + print()
+}
+
+struct ResponseMessage {
+    - response_message_array: uint8_t[]
+    + get_frame_control(): uint16_t
+    + get_frame_sequence_number(): uint8_t
+    + set_frame_sequence_number()
+    + increment_frame_sequence_number()
+    + get_persona_area_network_id()
+    + get_destination_address(): uint16_t
+    + set_destination_address(a: uint16_t)
+    + get_source_address(): uint16_t
+    + set_source_address(a: uint16_t)
+    + get_function_code(): uint8_t
+    + get_poll_message_receive_timestamp(): uint32_t
+    + set_poll_message_receive_timestamp()
+    + get_response_message_transmit_timestamp(): uint32_t
+    + set_response_message_transmit_timestamp()
+    + get_array_sizeof(): uint16_t
+    + get_array(): uint8_t*
+}
+
+struct Main {
+    + wait_for_poll_message_and_transmit_back_response_message()
+    + DW3000Chip_initialize_for_responder()
+    + setup()
+    + main()
+}
+
+@enduml

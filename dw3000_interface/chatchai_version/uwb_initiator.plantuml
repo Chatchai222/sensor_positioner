@@ -1,0 +1,95 @@
+@startuml
+
+struct UDP {
+    + connect_to_wifi(ssid: const char*, pwd: const char*)
+    + WiFiEvent(WiFiEvent_t event)
+    + publish_to_UDP(i: struct Initiator*, r: struct Responder*, double distance)
+}
+
+struct Responder {
+    - id: uint16_t
+    - frame_sequence_number: uint8_t
+    
+    + initialize(id: uint16_t)
+    + get_id(): uint16_t
+    + get_frame_sequence_number(): uint8_t
+    + set_frame_sequnece_number(n: uint8_t)
+    + increment_frame_sequence_number()
+    + print()
+}
+
+struct RoundRobinResponder {
+    - current_index: int
+    - responder_array: struct Responder[]
+
+    + increment_index()
+    + get_responder_ptr()
+    + print()
+}
+
+struct Initiator {
+    - id: uint16_t
+
+    + initialize(id: uint16_t)
+    + get_id(): uint16_t
+    + print()
+}
+
+struct PollMessage {
+    - poll_message_array: uint8_t[]
+
+    + get_frame_control(): uint16_t
+    + get_frame_sequence_number(): uint8_t
+    + set_frame_sequence_number()
+    + increment_frame_sequence_number()
+    + get_persona_area_network_id()
+    + get_destination_address(): uint16_t
+    + set_destination_address(a: uint16_t)
+    + get_source_address(): uint16_t
+    + set_source_address(a: uint16_t)
+    + get_function_code(): uint8_t
+    + get_array_sizeof(): uint16_t
+    + get_array(): uint8_t*
+    + print()
+}
+
+struct ResponseMessage {
+    - response_message_array: uint8_t[]
+    + get_frame_control(): uint16_t
+    + get_frame_sequence_number(): uint8_t
+    + set_frame_sequence_number()
+    + increment_frame_sequence_number()
+    + get_persona_area_network_id()
+    + get_destination_address(): uint16_t
+    + set_destination_address(a: uint16_t)
+    + get_source_address(): uint16_t
+    + set_source_address(a: uint16_t)
+    + get_function_code(): uint8_t
+    + get_poll_message_receive_timestamp(): uint32_t
+    + set_poll_message_receive_timestamp()
+    + get_response_message_transmit_timestamp(): uint32_t
+    + set_response_message_transmit_timestamp()
+    + get_array_sizeof(): uint16_t
+    + get_array(): uint8_t*
+}
+
+struct Ranger {
+    - MAX_RANGING_ATTEMPT_BEFORE_GIVING_UP: const int
+    - DELAY_BETWEEN_RANGING_ATTEMPT_IN_MILLISECOND: const uint32_t
+    - ranging_attempt_count: int
+
+    + get_recent_ranging_attempt_count(): int
+    + get_distance_or_null(i: struct Initiator*, r: struct Responder*): float
+    + single_attempt_get_distance_or_null()
+}
+
+struct Main {
+    
+    + DW3000Chip_initialize_for_intiator()
+    + setup()
+    + main()
+}
+
+
+
+@enduml
