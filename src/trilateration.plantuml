@@ -3,41 +3,103 @@
 class Anchor {
     - id: str 
     - pos: Position
-
+    
+    + Anchor(id: str, p: Position)
     + is_equal(): bool 
     + get_id(): str 
     + get_position(): Position 
-    + set_position(p: Position)
+    + set_position(p: Position): None
 }
-class Tag{
+class Tag {
     - id: str
     - many_dist_to_anchor_and_anchor: list
     
+    + Tag(id: str)
     + get_id(): str
     + get_many_dist_to_anchor_and_anchor(): list
-    + upsert_dist_to_anchor_and_anchor(d: float, a: Anchor)
+    + upsert_dist_to_anchor_and_anchor(d: float, a: Anchor): None
     + get_position(): Position
 }
 
-class AnchorCollection{
+class AnchorCollection {
     - many_anchor: list
 
-    get_many_anchor(): list
+    + AnchorCollection()
+    + get_many_anchor(): list
+    + insert_anchor_id_and_position(id: str, p: Position): None
+    + update_anchor_position(id: str, p: Position): None
+    + get_anchor(): str
+}
+class TagCollection {
+    - many_tag: list
+
+    + TagCollection()
+    + get_many_tag(): list
+    + insert_tag_by_id(id: str): None
+    + get_tag(id: str): Tag
+}
+
+class Room {
+    - anchor_collection: AnchorCollection
+    - tag_collection: TagCollection
+    - many_observer: list
+
+    + Room()
+    + populate_with_default_anchor_and_tag(): None
+    + get_many_anchor(): list
+    + upsert_anchor_position(id: str, a: Anchor): None
+    + get_many_tag(): list
+    + upsert_tag_to_anchor_dist(tag_id: str, anchor_id: str, d: float)
+    + get_many_observer(): list
+    + add_observer(o: RoomObserver): None
+    + notify_observer(): None
+}
+class TagToJSONStringConverter {
+    + TagToJSONStringConverter()
+    + get_JSON(t: Tag): str
+}
+
+abstract class MessageBroker{
+    + set_on_message_callback(c: callback): None
+    + publish(m: message): None
+}
+class MockMessageBroker {
+    - recent_publish: str
+    - on_message_callback: callback
+
+    + MockMessageBroker()
+    + get_recent_publish(): str
+    + get_on_message_callback(): callback
+    + on_message(message: str): None
+}
+class RedisMessageBroker {
+    + PUBLISHE_CHANNEL: str
+    + SUBSCRIBE_CHANNEL: str
     
-class TagCollection 
+    + RedisMessageBroker(hostname: str, port: int, auth: str)
+}
 
-class Room 
-class TagToJSONStringConverter 
+abstract class RoomObserver {
+    + notify(r: Room): None
+}
+class TagPositionPublisher {
+    - message_broker: MessageBroker
+    - tag_to_string_converter: TagToJSONStringConverter
+    - notify_count: int
 
-abstract class MessageBroker
-class MockMessageBroker
-class RedisMessageBroker
+    + TagPositionPublisher(in_message_broker)
+    + get_notify_count(): int
+    + get_message_broker(): MessageBroker
+}
+class MockRoomObserver {
+    + get_notify_count(): int
+}
 
-abstract class RoomObserver
-class TagPositionPublisher
-class MockRoomObserver
-
-class RoomRangeUpdater
+class RoomRangeUpdater {
+    - room: Room
+    
+    + RoomRangeUpdater(r: )
+}
 
 
 class Position 
