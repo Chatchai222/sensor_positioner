@@ -11,6 +11,7 @@ class Anchor {
     + set_position(p: Position): None
 }
 class Tag {
+    - {static} position_calculator: FarAxisOrigin2DPositionCalculator
     - id: str
     - many_dist_to_anchor_and_anchor: list
     
