@@ -90,6 +90,17 @@ struct Main {
     + main()
 }
 
+Ranger -- PollMessage
+Ranger -- ResponseMessage
+
+RoundRobinResponder "1" *-- "many" Responder
+
+Main *-- RoundRobinResponder
+Main *-- Ranger
+Main *-- UDP
+Main *-- Initiator
+
+
 
 
 @enduml

@@ -19,6 +19,7 @@ struct PollMessage {
 
 struct ResponseMessage {
     - response_message_array: uint8_t[]
+
     + get_frame_control(): uint16_t
     + get_frame_sequence_number(): uint8_t
     + set_frame_sequence_number()
@@ -38,10 +39,15 @@ struct ResponseMessage {
 }
 
 struct Main {
+    - RESPONDER_ID: uint16_t
+
     + wait_for_poll_message_and_transmit_back_response_message()
     + DW3000Chip_initialize_for_responder()
     + setup()
     + main()
 }
+
+Main *-- PollMessage
+Main *-- ResponseMessage
 
 @enduml
