@@ -1,4 +1,5 @@
 import room_model
+import trilaterate_algorithm
 
 def main():
     print("Setting up the trilateration program")
@@ -7,7 +8,9 @@ def main():
     tag_pos_pub = room_model.TagPositionPublisher(redis_msg_broker)
     room_range_updater = room_model.RoomRangeUpdater(r, redis_msg_broker)
     
-    r.populate_with_default_anchor_and_tag()
+    r.upsert_anchor_position("1000", trilaterate_algorithm.Position(0.00, 0.00, 0.00))
+    r.upsert_anchor_position("1001", trilaterate_algorithm.Position(5.40, 0.00, 0.00))
+    r.upsert_anchor_position("1002", trilaterate_algorithm.Position(0.00, 9.30, 0.00))
     r.add_observer(tag_pos_pub)
     
     print("Ending of setup the trilateration program")
